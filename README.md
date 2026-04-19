@@ -24,6 +24,7 @@ Agent skills loaded automatically by Claude Code and other compatible agents.
 | Skill | Description |
 |-------|-------------|
 | `navigation-3` | Google's official Navigation 3 recipes — basic API, Koin integration, deep links, scenes, conditional nav, passing arguments, returning results |
+| `edge-to-edge` | System bars, insets, IME handling, safe area padding for Compose apps targeting SDK 35+ |
 
 Source: [google/android-skills](https://github.com/google-ai-edge/gallery) — official Google repo.
 
