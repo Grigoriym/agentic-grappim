@@ -1,32 +1,45 @@
 # agentic-grappim
 
-Shared agent skills and templates for grappim projects. Changes here are immediately available in all linked projects — no sync step needed.
+Shared agent skills and templates for grappim projects.
 
 ## Projects using this repo
 
 | Project | Path |
 |---------|------|
-| MealieMobile | `../MealieMobile/.claude/` |
-| TaigaMobileNova | `../TaigaMobileNova/.claude/` |
+| MealieMobile | `../MealieMobile/` |
+| TaigaMobileNova | `../TaigaMobileNova/` |
 
-Each project symlinks into this repo:
+## Setup (new machine / fresh clone)
+
+Each project embeds this repo as a git submodule at `.claude/agentic-grappim/`. After cloning a project, run:
+
+```bash
+git submodule update --init
 ```
-.claude/skills/navigation-3  →  ../../../../agentic-grappim/skills/navigation-3
-.claude/templates/spec.md    →  ../../../../agentic-grappim/templates/spec.md
+
+That's it — all skills and templates resolve automatically via intra-repo symlinks.
+
+## Structure inside each project
+
+```
+ProjectName/
+  .claude/
+    agentic-grappim/        ← submodule (this repo)
+    skills/
+      edge-to-edge          → ../agentic-grappim/skills/edge-to-edge
+      navigation-3          → ../agentic-grappim/skills/navigation-3
+    templates/
+      spec.md               → ../agentic-grappim/templates/spec.md
 ```
 
 ## Contents
 
 ### `skills/`
 
-Agent skills loaded automatically by Claude Code and other compatible agents.
-
 | Skill | Description |
 |-------|-------------|
 | `navigation-3` | Google's official Navigation 3 recipes — basic API, Koin integration, deep links, scenes, conditional nav, passing arguments, returning results |
 | `edge-to-edge` | System bars, insets, IME handling, safe area padding for Compose apps targeting SDK 35+ |
-
-Source: [google/android-skills](https://github.com/google-ai-edge/gallery) — official Google repo.
 
 ### `templates/`
 
@@ -43,18 +56,19 @@ Source: [google/android-skills](https://github.com/google-ai-edge/gallery) — o
        SKILL.md
        references/   (optional)
    ```
-2. Symlink it into each project:
+2. In each project, add a symlink into the submodule:
    ```bash
-   ln -s ../../../../agentic-grappim/skills/my-skill ProjectName/.claude/skills/my-skill
+   ln -s ../agentic-grappim/skills/my-skill .claude/skills/my-skill
+   git add .claude/skills/my-skill
    ```
 3. Commit in both repos.
 
 ## Adding a new project
 
 ```bash
-mkdir -p NewProject/.claude/skills NewProject/.claude/templates
-ln -s ../../../../agentic-grappim/skills/navigation-3 NewProject/.claude/skills/navigation-3
-ln -s ../../../../agentic-grappim/templates/spec.md NewProject/.claude/templates/spec.md
+git submodule add https://github.com/Grigoriym/agentic-grappim.git NewProject/.claude/agentic-grappim
+ln -s ../agentic-grappim/skills/navigation-3 NewProject/.claude/skills/navigation-3
+ln -s ../agentic-grappim/skills/edge-to-edge NewProject/.claude/skills/edge-to-edge
+ln -s ../agentic-grappim/templates/spec.md NewProject/.claude/templates/spec.md
+git -C NewProject add .gitmodules .claude/
 ```
-
-> Symlinks assume all projects live as siblings under the same parent directory (`grappim/`).
