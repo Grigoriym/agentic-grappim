@@ -40,6 +40,7 @@ ProjectName/
 |-------|-------------|
 | `navigation-3` | Google's official Navigation 3 recipes — basic API, Koin integration, deep links, scenes, conditional nav, passing arguments, returning results |
 | `edge-to-edge` | System bars, insets, IME handling, safe area padding for Compose apps targeting SDK 35+ |
+| `adaptive` | Adaptive layouts for phones, tablets, foldables — window size classes, FlexboxLayout, Grid, MediaQuery, list-detail |
 
 ### `templates/`
 
