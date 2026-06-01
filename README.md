@@ -44,6 +44,7 @@ ProjectName/
 | `edge-to-edge` | System bars, insets, IME handling, safe area padding for Compose apps targeting SDK 35+ |
 | `adaptive` | Adaptive layouts for phones, tablets, foldables — window size classes, FlexboxLayout, Grid, MediaQuery, list-detail |
 | `agp9` | Upgrades an Android project to Android Gradle Plugin version 9 (not for KMP projects) |
+| `r8-analyzer` | Analyzes R8 keep rules to identify redundancies, overly broad rules, and size optimization opportunities |
 
 ### `templates/`
 
