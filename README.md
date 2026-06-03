@@ -45,6 +45,13 @@ ProjectName/
 | `adaptive` | Adaptive layouts for phones, tablets, foldables — window size classes, FlexboxLayout, Grid, MediaQuery, list-detail |
 | `agp9` | Upgrades an Android project to Android Gradle Plugin version 9 (not for KMP projects) |
 | `r8-analyzer` | Analyzes R8 keep rules to identify redundancies, overly broad rules, and size optimization opportunities |
+| `update-gradle-wrapper` | Updates the Gradle wrapper to a specific version, auto-fetching the SHA-256 checksum from Gradle's distribution server |
+
+### `agents/`
+
+| Agent | Description |
+|-------|-------------|
+| `koin-expert` | Koin DI expert for TaigaMobileNova KMP — diagnoses `NoBeanDefinitionException`, broken expect/actual `@Configuration`, missing module wiring, and `KoinGraphTest` failures |
 
 ### `templates/`
 
