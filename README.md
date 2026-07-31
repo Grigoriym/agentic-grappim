@@ -1,38 +1,30 @@
 # agentic-grappim
 
-Shared agent skills and templates for grappim projects.
+Shared Claude Code skills and agents for grappim projects.
 
-## Projects using this repo
+## How it's wired
 
-| Project | Path |
-|---------|------|
-| MealieMobile | `../MealieMobile/` |
-| TaigaMobileNova | `../TaigaMobileNova/` |
-| HateItOrRateIt | `../HateItOrRateIt/` |
+The skills and agents here are installed **once for the user account**, not per
+project. Claude Code reads `~/.claude/skills/` and `~/.claude/agents/` in every
+session, whatever directory you're working in — so anything installed there is
+available in all projects automatically, including new ones.
+
+There is nothing to add to a project to make these available.
 
 ## Setup (new machine / fresh clone)
 
-Each project embeds this repo as a git submodule at `.claude/agentic-grappim/`. After cloning a project, run:
-
 ```bash
-git submodule update --init
+git clone https://github.com/Grigoriym/agentic-grappim.git ~/proj/grappim/agentic-grappim
+
+mkdir -p ~/.claude/skills ~/.claude/agents
+
+ln -s ~/proj/grappim/agentic-grappim/skills/finalize              ~/.claude/skills/finalize
+ln -s ~/proj/grappim/agentic-grappim/skills/update-gradle-wrapper ~/.claude/skills/update-gradle-wrapper
+ln -s ~/proj/grappim/agentic-grappim/agents/koin-expert.md        ~/.claude/agents/koin-expert.md
 ```
 
-That's it — all skills and templates resolve automatically via intra-repo symlinks.
-
-## Structure inside each project
-
-```
-ProjectName/
-  .claude/
-    agentic-grappim/        ← submodule (this repo)
-    skills/
-      adaptive              → ../agentic-grappim/skills/adaptive
-      edge-to-edge          → ../agentic-grappim/skills/edge-to-edge
-      navigation-3          → ../agentic-grappim/skills/navigation-3
-    templates/
-      spec.md               → ../agentic-grappim/templates/spec.md
-```
+Symlinks mean a `git pull` here updates every project at once. Copies work too, but
+then each update has to be re-copied.
 
 ## Contents
 
@@ -40,12 +32,8 @@ ProjectName/
 
 | Skill | Description |
 |-------|-------------|
-| `navigation-3` | Google's official Navigation 3 recipes — basic API, Koin integration, deep links, scenes, conditional nav, passing arguments, returning results |
-| `edge-to-edge` | System bars, insets, IME handling, safe area padding for Compose apps targeting SDK 35+ |
-| `adaptive` | Adaptive layouts for phones, tablets, foldables — window size classes, FlexboxLayout, Grid, MediaQuery, list-detail |
-| `agp9` | Upgrades an Android project to Android Gradle Plugin version 9 (not for KMP projects) |
-| `r8-analyzer` | Analyzes R8 keep rules to identify redundancies, overly broad rules, and size optimization opportunities |
-| `update-gradle-wrapper` | Updates the Gradle wrapper to a specific version, auto-fetching the SHA-256 checksum from Gradle's distribution server |
+| `finalize` | End-of-session wrap-up — captures what was learned into the project's `CLAUDE.md` and memory; anything reusable becomes a proposal doc in `.claude/proposals/` for review here |
+| `update-gradle-wrapper` | Updates the Gradle wrapper to a given version, fetching the SHA-256 checksum from Gradle's distribution server |
 
 ### `agents/`
 
@@ -53,65 +41,34 @@ ProjectName/
 |-------|-------------|
 | `koin-expert` | Koin DI expert for TaigaMobileNova KMP — diagnoses `NoBeanDefinitionException`, broken expect/actual `@Configuration`, missing module wiring, and `KoinGraphTest` failures |
 
-### `templates/`
+## Adding a skill
 
-| Template | Usage |
-|----------|-------|
-| `spec.md` | Feature spec — fill in before starting a feature, save next to the feature module |
+1. Create `skills/<name>/SKILL.md` with `name` and `description` frontmatter. Long
+   reference material goes in `skills/<name>/references/`, not in `SKILL.md`.
+2. Link it in: `ln -s ~/proj/grappim/agentic-grappim/skills/<name> ~/.claude/skills/<name>`
+3. Add a row to the table above, and commit.
 
-## Adding a new skill
+A skill must be a folder containing `SKILL.md`. A loose `.md` file in `skills/` will
+not be picked up.
 
-1. Add the skill folder to `skills/`:
-   ```
-   skills/
-     my-skill/
-       SKILL.md
-       references/   (optional)
-   ```
-2. In each project, add a symlink into the submodule:
-   ```bash
-   ln -s ../agentic-grappim/skills/my-skill .claude/skills/my-skill
-   git add .claude/skills/my-skill
-   ```
-3. Commit in both repos.
+## Proposals
 
-## Adding a new project
+The `finalize` skill never edits this repo from another project — editing a linked
+skill in place would silently change behaviour everywhere. Instead it writes
+`.claude/proposals/<date>-<slug>.md` in whichever project it ran in.
 
-Run these commands from inside the new project's root directory:
+When working here, check those directories for proposals waiting to be applied:
 
 ```bash
-# 1. Add the submodule
-git submodule add https://github.com/Grigoriym/agentic-grappim.git .claude/agentic-grappim
-
-# 2. Create skill and template symlinks
-mkdir -p .claude/skills .claude/templates
-ln -s ../agentic-grappim/skills/adaptive      .claude/skills/adaptive
-ln -s ../agentic-grappim/skills/edge-to-edge  .claude/skills/edge-to-edge
-ln -s ../agentic-grappim/skills/navigation-3  .claude/skills/navigation-3
-ln -s ../agentic-grappim/templates/spec.md    .claude/templates/spec.md
-
-# 3. Commit
-git add .gitmodules .claude/
-git commit -m "migrate shared skills to git submodule"
+ls ~/proj/grappim/*/.claude/proposals/ 2>/dev/null
 ```
 
-Then add a **Skills** section to the project's `CLAUDE.md`:
+## Projects using these skills
 
-```markdown
-## Skills
+| Project | Path |
+|---------|------|
+| MealieMobile | `../MealieMobile/` |
+| TaigaMobileNova | `../TaigaMobileNova/` |
+| HateItOrRateIt | `../HateItOrRateIt/` |
 
-Skills live in `.claude/skills/`. Shared skills come from the `agentic-grappim` git submodule at `.claude/agentic-grappim/`.
-
-**After cloning**, initialize the submodule to make shared skills available:
-\`\`\`bash
-git submodule update --init
-\`\`\`
-
-| Skill | Usage | Description |
-|-------|-------|-------------|
-| `navigation-3` | Reference skill (auto-loaded) | Google's official Navigation 3 recipes |
-| `edge-to-edge` | Reference skill (auto-loaded) | System bars, insets, IME handling for SDK 35+ |
-| `adaptive` | Reference skill (auto-loaded) | Adaptive layouts for tablets/foldables — window size classes, list-detail, FlexboxLayout |
-```
-
-Finally, add the project to the [Projects using this repo](#projects-using-this-repo) table above.
+Listed for reference only — no wiring lives in these projects.
