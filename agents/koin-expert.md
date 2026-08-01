@@ -164,6 +164,13 @@ When a Koin exception occurs, follow this checklist:
 5. **Check @ComponentScan scope.** If a class is in a package outside `com.grappim.taigamobile`, it won't be found.
 6. **Check qualifier match.** Injection qualifier annotation class must be identical to the provision qualifier (not just same name).
 
+**When the graph can't be started at all** — a half-wired module, or a project where `startKoin` doesn't
+exist yet — `KoinGraphTest` and `checkModules` are unavailable, so fall back to disassembling the
+generated module class (see *Gradle Commands*). It shows the registered definitions and their
+constructor dependencies at compile time, which settles "was my `@Single` picked up?" without a runtime.
+It also confirms the two cases that look identical from the outside: an `internal` class being
+registered, and a `@ComponentScan` reaching a class in a *different source set* from the module class.
+
 Common patterns:
 - **`NoBeanDefinitionException` for `Context`**: Missing `androidContext(...)` at startup, or not pre-registered in test via `withInstance<Context>(context)`.
 - **Module not included**: `actual class` is missing `@Configuration`, or `@Module(includes = [XyzModule::class])` is missing the common module.
@@ -200,9 +207,18 @@ Common patterns:
 # Run all unit tests for the app
 ./gradlew :composeApp:testGplayDebugUnitTest
 
-# Check generated Koin sources (IR plugin transforms, may not produce .kt files)
-find composeApp/build -name "*.kt" | xargs grep -l "KoinApp\|AppModule" 2>/dev/null
+# Read back what a @ComponentScan actually found. The IR plugin produces no .kt sources, but it
+# does emit a generated module class next to the compiled @Module class — one `module$lambda`
+# per definition, naming the constructed type and every Scope.get() it depends on.
+find core/storage/build/classes -name "*ModuleKt.class"      # locate it (per target: android/, jvm/, ios*/)
+javap -p -c <that>.class | grep "private static final"
 ```
+
+The generated name folds the package into the class name — `com.grappim.taigamobile.core.storage.StorageModule` →
+`ComGrappimTaigamobileCoreStorageStorageModuleModuleKt` — and it sits in the `@Module` class's own package.
+`build/classes/kotlin/*/main/org/koin/plugin/hints/` also collects `…DefinitionKt` markers, but that
+directory is **not** a complete index: a definition can be in the generated module with no hint file.
+Read the module class, not the hints.
 
 ---
 
