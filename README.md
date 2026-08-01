@@ -19,6 +19,7 @@ git clone https://github.com/Grigoriym/agentic-grappim.git ~/proj/grappim/agenti
 mkdir -p ~/.claude/skills ~/.claude/agents
 
 ln -s ~/proj/grappim/agentic-grappim/skills/finalize              ~/.claude/skills/finalize
+ln -s ~/proj/grappim/agentic-grappim/skills/investigate-issue     ~/.claude/skills/investigate-issue
 ln -s ~/proj/grappim/agentic-grappim/skills/update-gradle-wrapper ~/.claude/skills/update-gradle-wrapper
 ln -s ~/proj/grappim/agentic-grappim/agents/koin-expert.md        ~/.claude/agents/koin-expert.md
 ```
@@ -33,6 +34,7 @@ then each update has to be re-copied.
 | Skill | Description |
 |-------|-------------|
 | `finalize` | End-of-session wrap-up — captures what was learned into the project's `CLAUDE.md` and memory; anything reusable becomes a proposal doc in `.claude/proposals/` for review here |
+| `investigate-issue` | Investigation-first process for bug reports — evidence-based root cause, an investigation doc in `.claude/issues/`, options with tradeoffs, then a stop for the user's decision before any code |
 | `update-gradle-wrapper` | Updates the Gradle wrapper to a given version, fetching the SHA-256 checksum from Gradle's distribution server |
 
 ### `agents/`
