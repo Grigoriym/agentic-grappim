@@ -34,7 +34,7 @@ then each update has to be re-copied.
 | Skill | Description |
 |-------|-------------|
 | `finalize` | End-of-session wrap-up — captures what was learned into the project's `CLAUDE.md` and memory; anything reusable becomes a proposal doc in `.claude/proposals/` for review here |
-| `investigate-issue` | Investigation-first process for bug reports — evidence-based root cause, an investigation doc in `.claude/issues/`, options with tradeoffs, then a stop for the user's decision before any code |
+| `investigate-issue` | Investigation-first process for bug reports — evidence-based root cause, an investigation doc in `docs/issues/`, options with tradeoffs, then a stop for the user's decision before any code |
 | `update-gradle-wrapper` | Updates the Gradle wrapper to a given version, fetching the SHA-256 checksum from Gradle's distribution server |
 
 ### `agents/`

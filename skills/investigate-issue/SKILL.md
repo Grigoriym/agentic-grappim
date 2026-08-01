@@ -2,7 +2,7 @@
 name: investigate-issue
 description: Investigate a reported bug or issue properly before writing any fix —
   establish the root cause from evidence, write an investigation doc under
-  `.claude/issues/`, weigh the options with real tradeoffs, and only then break an
+  `docs/issues/`, weigh the options with real tradeoffs, and only then break an
   approved fix into independently testable parts. Use when the user shares a GitHub
   issue URL or number, says "check this issue", "look into this bug", "triage this",
   or otherwise reports a defect to diagnose.
@@ -80,8 +80,11 @@ Rules:
 
 ## Step 3. Write the doc
 
-Path: `.claude/issues/<issue-number>-<slug>.md`, or `<YYYY-MM-DD>-<slug>.md` when
-there's no issue number. Create the directory if needed.
+Path: `docs/issues/<issue-number>-<slug>.md`, or `<YYYY-MM-DD>-<slug>.md` when there's
+no issue number. Create the directory if needed.
+
+This is versioned project documentation, not agent scratch — it gets committed and
+reviewed alongside the fix. Keep it readable by someone who was never in the session.
 
 ```markdown
 # <number> — <title>
