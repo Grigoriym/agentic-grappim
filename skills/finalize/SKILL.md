@@ -133,6 +133,10 @@ home for cross-project knowledge — that's what the shared skills are for.
 
 ## Step 4. Apply
 
+- **Docs this session invalidated**: if the work falsified a claim in an existing
+  project doc, correcting that doc is part of finalize, not a follow-up. A fix that
+  lands while a doc still reports the problem as open leaves the doc actively
+  misleading, and the next session will cite it as current.
 - **`CLAUDE.md` and project docs**: add to the section that covers the topic; only
   create a new section when none fits. Match the file's existing voice.
 - **Memory**: one file per fact, plus a one-line pointer in `MEMORY.md`. Update an
