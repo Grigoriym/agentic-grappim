@@ -86,6 +86,9 @@ matter, and the second is the one that gets forgotten.
 - A correction the user made to your approach, and the reason behind it.
 - An order of work that mattered — something cheap that had to happen before
   something expensive, or a verification that only meant anything from a clean state.
+- A real problem you saw and deliberately left alone to keep the diff honest. This is
+  knowledge too, and it is the kind most often lost — "not fixed" reads as "nothing to
+  record", so it dies with the session instead of reaching the routing table.
 
 Write the raw list first. Filtering comes next — do not filter while harvesting.
 
@@ -120,6 +123,7 @@ outcome; do not manufacture updates.
 | User's working style, or a correction with a why | memory (`user` / `feedback`) |
 | Ongoing goal or constraint not derivable from the repo | memory (`project`) |
 | External URL that will be needed again | memory (`reference`) |
+| A real problem seen and deliberately **not** fixed | the project's deferred/backlog doc — create one if absent |
 
 `CLAUDE.md` is the default **for conventions and gotchas**. Where the project
 designates a doc for a kind of fact, that doc wins for that kind — an architecture

@@ -163,6 +163,12 @@ whether it fails before the change. A part with no verification story is not rea
 implement. If something genuinely cannot be tested automatically, state how it will
 be checked by hand and why automation isn't possible.
 
+**If the defect is intermittent, one green run is not evidence.** Races, ordering
+dependencies and timing bugs pass by luck all the time — that is what makes them
+races. Establish a before-state *rate* ("2 of 3 runs failed, each blaming a different
+test"), then re-run the fixed state the same number of times. State the count in the
+doc, because "it passes now" is exactly what someone said before shipping the flake.
+
 Order the parts so the failing regression test comes first, then the fix that turns
 it green, then any cleanup.
 
