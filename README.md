@@ -33,7 +33,7 @@ then each update has to be re-copied.
 
 | Skill | Description |
 |-------|-------------|
-| `finalize` | End-of-session wrap-up — captures what was learned into the project's `CLAUDE.md` and memory; anything reusable becomes a proposal doc in `.claude/proposals/` for review here |
+| `finalize` | End-of-session wrap-up — captures what was learned into the project's `CLAUDE.md`, its docs and memory; a lesson that isn't project-specific is edited straight into the skill here, uncommitted for review |
 | `investigate-issue` | Investigation-first process for bug reports — evidence-based root cause, an investigation doc in `docs/issues/`, options with tradeoffs, then a stop for the user's decision before any code |
 | `update-gradle-wrapper` | Updates the Gradle wrapper to a given version, fetching the SHA-256 checksum from Gradle's distribution server |
 
@@ -53,17 +53,22 @@ then each update has to be re-copied.
 A skill must be a folder containing `SKILL.md`. A loose `.md` file in `skills/` will
 not be picked up.
 
-## Proposals
+## How a session improves a skill
 
-The `finalize` skill never edits this repo from another project — editing a linked
-skill in place would silently change behaviour everywhere. Instead it writes
-`.claude/proposals/<date>-<slug>.md` in whichever project it ran in.
+The `finalize` skill edits this repo **directly**, from whichever project it runs in —
+that is the point of it. A lesson that isn't specific to one project belongs in the
+skill, not in a queue of documents waiting to be applied.
 
-When working here, check those directories for proposals waiting to be applied:
+What keeps that safe is git, not a gate: the edit is left **uncommitted**, and the
+report names the file it touched. Review before it reaches other projects:
 
 ```bash
-ls ~/proj/grappim/*/.claude/proposals/ 2>/dev/null
+cd ~/proj/grappim/agentic-grappim && git diff
 ```
+
+Keep or drop it with `git commit` or `git checkout -- .`. A shared edit is supposed to
+be rare — one occurrence in one project is that project's knowledge and belongs in its
+`CLAUDE.md`.
 
 ## Projects using these skills
 

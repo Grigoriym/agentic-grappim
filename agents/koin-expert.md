@@ -44,7 +44,7 @@ Platform init:
 
 ### Android entry point note (AGP 9 migration)
 
-`androidApp` is now the Android application module. `composeApp` is a KMP library. `startKoin<KoinApp>` lives in `androidApp/TaigaApp.kt`. See `docs/koin-androidapp-migration.md` for full details on how module discovery works across this boundary.
+`androidApp` is now the Android application module. `composeApp` is a KMP library. `startKoin<KoinApp>` lives in `androidApp/TaigaApp.kt`. See `docs/koin/koin-androidapp-migration.md` for full details on how module discovery works across this boundary.
 
 ---
 
@@ -106,6 +106,12 @@ All 48 feature/utils submodules have their own `@Module @Configuration @Componen
 | `@Single` | Singleton — one instance per Koin scope |
 | `@Factory` | New instance per `get()` call |
 | `@KoinViewModel` | Android ViewModel (scoped to its owner) |
+| `@Scoped` + `@Scope(Marker::class)` | Tied to a Koin scope opened/closed by hand — **not used in this project** |
+
+This project has no `@Scoped` definitions. `WorkItemEditStateRepository` is the one place where
+per-session isolation was needed, and it uses a `@Single` holding an internal session map instead of
+a Koin scope (see `docs/koin/workitem-edit-scoping.md` for why). If you are tempted to introduce
+`@Scoped`, read that doc first.
 
 ### Parameter annotations
 
@@ -117,6 +123,26 @@ All 48 feature/utils submodules have their own `@Module @Configuration @Componen
 | `@Named("qualifier")` | Simple string qualifier (alternative to custom qualifier annotations) |
 
 `@Provided` skips compile-time validation — use it when a constructor parameter is supplied by the framework (e.g., `Context`) rather than Koin.
+
+### How each parameter resolves
+
+The plugin picks the injection call from the parameter's type and annotation. Worth knowing, because
+the nullable / `Lazy` / `List` cases change behaviour with no annotation involved:
+
+| Parameter | Annotation | Generated call |
+|-----------|-----------|----------------|
+| `T` | none | `scope.get()` |
+| `T?` | none | `scope.getOrNull()` — **silently null instead of throwing** when unbound |
+| `Lazy<T>` | none | `scope.inject()` — constructed on first access |
+| `List<T>` | none | `scope.getAll()` — collects every binding of `T` |
+| `T` | `@Named("x")` | `scope.get(named("x"))` |
+| `T` | `@Qualifier(MyType::class)` | `scope.get(typeQualifier<MyType>())` |
+| `T` | `@InjectedParam` | `params.get()` |
+| `String`/`Int`/… | `@Property("key")` | `scope.getProperty("key")` |
+| `String`/`Int`/… | `@Property("key")` + `@PropertyValue("default")` | `scope.getProperty("key", default)` |
+
+A `T?` parameter is the usual explanation for "the bean resolved but the dependency is null" — it
+never raises `NoBeanDefinitionException`.
 
 ### Injecting by qualifier annotation at runtime
 
@@ -197,6 +223,34 @@ Common patterns:
 - Do NOT add `@Module` to the `expect class`
 
 ---
+
+## Plugin Limitations
+
+| Limitation | Consequence |
+|------------|-------------|
+| No compile-time dependency validation | A missing binding crashes at **runtime**, not build time. This is why `KoinGraphTest` exists — it is the only thing standing in for a compile check. |
+| `singleOf(::T)` / `factoryOf(::T)` unsupported | Use `single<T>()` / `factory<T>()`. |
+| `create(::T)` is scope-only | Constructor references work only inside `Scope.create(::T)`. |
+| Dynamically built modules aren't scanned | Register them by hand in `startKoin { modules(...) }`. |
+
+## Gradle Configuration
+
+The plugin's options live in a `koinCompiler { }` block:
+
+```kotlin
+koinCompiler {
+    userLogs = true         // log which components were detected
+    debugLogs = true        // verbose internal processing
+    dslSafetyChecks = true  // enforce create(::T) being the only statement in its lambda
+}
+```
+
+In this project:
+
+- `debugLogs` / `userLogs` are set only in `composeApp/build.gradle.kts` and `androidApp/build.gradle.kts`.
+- `compileSafety = false` is applied by reflection in `KmpDiConventionPlugin` for every KMP library
+  module, and directly in `androidApp/build.gradle.kts`. Don't "fix" the reflection — the property
+  isn't on the public extension type.
 
 ## Gradle Commands
 
