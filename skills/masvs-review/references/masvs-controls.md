@@ -3,9 +3,13 @@
 The 24 control statements, quoted from
 [`OWASP_MASVS.yaml`](https://github.com/OWASP/owasp-masvs/blob/master/OWASP_MASVS.yaml).
 
-> MASVS is © OWASP Foundation, licensed **CC BY-SA 4.0**. The statements below are quoted
-> verbatim; the commentary in the right-hand column is ours. Redistribution of this file
-> is under the same licence.
+> **Licensing — this file mixes two.**
+> The text in every **Statement** column is quoted verbatim from MASVS, © OWASP
+> Foundation, licensed [**CC BY-SA 4.0**](https://creativecommons.org/licenses/by-sa/4.0/).
+> Everything else here — the *Reading it here* commentary, the structure, the MASTG
+> lookup section — is ours and carries the repo's Apache-2.0 licence.
+> If you copy the tables elsewhere, keep the attribution and the CC BY-SA notice on the
+> quoted statements.
 
 ## Storage
 

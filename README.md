@@ -93,6 +93,18 @@ Keep or drop it with `git commit` or `git checkout -- .`. A shared edit is suppo
 be rare — one occurrence in one project is that project's knowledge and belongs in its
 `CLAUDE.md`.
 
+## Third-party content
+
+The repo is Apache-2.0, with one exception worth knowing before you copy anything out of it:
+
+| File | Contains | Licence |
+|---|---|---|
+| `skills/masvs-review/references/masvs-controls.md` | the 24 MASVS v2 control statements, quoted verbatim | © OWASP Foundation, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
+
+The commentary around those quotes is ours. Nothing here is derived from any third-party
+skill collection — the control text comes from OWASP's own `OWASP_MASVS.yaml`, and the
+MASTG test mapping is read live from the OWASP repo rather than copied.
+
 ## Projects using these skills
 
 | Project | Path |
