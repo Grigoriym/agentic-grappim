@@ -1,0 +1,183 @@
+<!--
+  Shared, technology-neutral part of a project CLAUDE.md.
+
+  Copy into a project's CLAUDE.md and add the project-specific sections around it:
+  build commands, architecture, stack, conventions, gotchas. Nothing below names a
+  language, framework or tool on purpose — everything here held true in more than one
+  project.
+
+  Fill in every <PLACEHOLDER> and delete what doesn't apply. An unfilled placeholder
+  reads as fact.
+
+  Keep it short. A file that grows a paragraph every session stops being read in full,
+  and a CLAUDE.md nobody reads to the end is worse than a shorter one.
+-->
+
+# <PROJECT NAME>
+
+<One or two sentences: what this is and who uses it. Not a feature list.>
+
+## What this file is not
+
+**Point, don't copy.** Where another file owns a fact, link it and stop. A version
+number, a progress marker, a task list restated here is a second copy free to drift
+from the first, and it will.
+
+- Status / progress → <`docs/CHECKLIST.md` header, or delete this line>
+- Versions → <the dependency manifest>
+- Architecture rationale → <`docs/…`>
+
+## Shared skills and agents
+
+Skills and agents live in the **`agentic-grappim`** repo and are symlinked into
+`~/.claude/skills/` and `~/.claude/agents/`. They are wired up **per machine, not per
+clone** — there is nothing in this repo to install.
+
+Consequences worth knowing before touching one:
+
+- **An edit there changes behaviour in every project on this machine.** That is the
+  point of the repo, not a hazard to avoid — but it has to be said out loud, and it
+  has to be committed in `agentic-grappim`, not here.
+- **Never edit a shared skill for a fact about this project.** One occurrence in one
+  project is project knowledge and belongs in this file.
+- A stale in-repo copy of a shared agent will silently shadow the real one. Don't
+  duplicate them locally.
+
+`.claude/agents/` in this repo holds **only** project-specific agents: <name them, or
+"none">.
+
+## Close-out
+
+<Delete this section if the project has no per-unit-of-work ritual.>
+
+At the end of each <step / task / session>, without being asked:
+
+1. Run the **`/finalize` skill** — the work almost always taught something the plan
+   didn't know, and this is where it gets written down instead of dying with the
+   context.
+2. **Check the docs for claims the work just made false.** Grep for what changed
+   rather than trusting a read-through; a file full of stale present-tense statements
+   is actively misleading, and the next session will cite it as current. Correcting it
+   is part of the work, not a follow-up.
+3. <Commit convention, if any: one commit per step, subject format, branch.>
+
+## Changing a check means saying so
+
+The gates constrain what a session may write; nothing constrains a session from
+widening a gate so its own work passes. Loosening one is often right — doing it
+quietly never is.
+
+Say so explicitly, in the commit message and in the report, whenever you:
+
+- suppress, ignore, or disable a rule, warning, or test
+- lower a threshold, floor, or limit
+- delete a rule from this file, or a step from a plan document
+- change lint, formatting, dependency, or CI configuration
+
+A suppression **carried over from another project** is worth deleting and re-running
+first — it is often for a problem this toolchain doesn't have.
+
+## Verification
+
+**"Done" means the relevant check ran and passed.** If it didn't run, say that instead.
+
+- **A narrow pass proves your change works, not that you broke nothing.** When a
+  failure shows up alongside your change, A/B it against a clean tree (`git stash -u`)
+  before assuming you caused it — or that you didn't.
+- **A check that looks the same whether the thing worked or not is not a check.**
+  Before trusting one, name what it would show if the change had done nothing.
+- **Before/after comparisons need equally fresh runs.** A baseline taken from a
+  partially cached build measures a different universe than the after-run. A moved
+  total is a signal the two runs aren't comparable, not a result.
+- **Confirm the baseline shows the pre-change value before trusting it**, and copy each
+  report to a distinct path immediately. Overwrite the "before" once and the diff comes
+  back showing nothing changed anywhere — which reads like a plausible result rather
+  than a mistake.
+
+## Plain technical English
+
+Write for a reader whose first language is not English. The model is ASD-STE100
+Simplified Technical English, **minus its approved-word dictionary** — that list isn't
+something I can verify against, so the rules below are the binding part, not "STE
+compliance".
+
+- **One word per idea.** Pick a term and reuse it. No synonyms for variety.
+- **Short sentences.** Around 20 words for an instruction, 25 for an explanation. One
+  instruction per sentence.
+- **Active voice.** "Run the task", not "the task should be run".
+- **One topic per paragraph**, six sentences at most.
+- **Domain terms are fine.** Identifiers, task names, library names and API names are
+  technical names — use them exactly, don't paraphrase them into plain words.
+
+Where it yields: **uncertainty and conditions win over brevity.** If a claim holds only
+under some condition, say the condition even if the sentence gets long. A short
+sentence that drops the caveat is wrong, not simple.
+
+## Working agreements
+
+**Tradeoff:** these bias toward caution over speed. For trivial tasks, use judgment.
+
+### Think before coding
+
+Don't assume. Don't hide confusion. Surface tradeoffs.
+
+- State assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them — don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+### Simplicity first
+
+Minimum code that solves the problem. Nothing speculative.
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask: "would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+### Surgical changes
+
+Touch only what you must. Clean up only your own mess.
+
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor what isn't broken. Match existing style, even if you'd do it
+  differently.
+- Don't add UI or navigation that wasn't asked for.
+- Remove imports, variables and functions **your** change orphaned. Leave pre-existing
+  dead code alone — mention it instead.
+
+**Every changed line should trace directly to the request.**
+
+### Goal-driven execution
+
+Turn a task into a verifiable goal — "fix the bug" becomes "write a failing test, then
+make it pass". For multi-step work, state the steps with a check each, then loop until
+they pass.
+
+### A real problem outside the task goes in writing
+
+Write it into <`docs/revisit.md`> and keep going. Not fixed inline — that makes the
+diff unreviewable. Not dropped. And **not just mentioned in chat: chat is not
+persistence.** Give the entry enough evidence (`file:line`, or a link) that a cold
+session can act on it without re-deriving anything.
+
+## Settled decisions
+
+Weighed and declined — don't re-propose these.
+
+| Not used | Instead | Why |
+|---|---|---|
+| <option> | <what's used> | <one line> |
+
+## Reference projects
+
+Read these rather than guessing; the conventions here are ported from them.
+
+- <`../OtherProject`> — <what to look at, specifically>
+
+**Trust their code over their docs.** Another project's `CLAUDE.md` can contradict its
+own implementation — both of these repos have had exactly that. Note a drift here when
+you find one.

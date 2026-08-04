@@ -74,6 +74,10 @@ matter, and the second is the one that gets forgotten.
 - A convention in the project that isn't obvious from reading the code.
 - A version constraint or compatibility pin discovered the hard way.
 - A command sequence that worked and will be needed again.
+- A hypothesis you tested and **disproved**. "X is not the trigger" is a finding: it
+  stops the next session spending the same experiment, and unexplained tooling
+  behaviour attracts the same guesses every time. Record the experiment, not just the
+  conclusion.
 - An external resource that turned out to matter (docs page, issue, dashboard).
 
 **Process** — how the work went, which is what makes the next session better:
