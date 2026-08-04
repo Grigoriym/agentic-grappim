@@ -145,6 +145,12 @@ home for cross-project knowledge — that's what the shared skills are for.
   project doc, correcting that doc is part of finalize, not a follow-up. A fix that
   lands while a doc still reports the problem as open leaves the doc actively
   misleading, and the next session will cite it as current.
+  **Grep for what you're about to call a discovery before you write it up.** The doc
+  that already predicted the finding is the one most worth correcting, because a
+  prediction usually ships with a dismissal attached — "X can't reach this", "nothing
+  in this milestone needs it" — and it is the dismissal, not the prediction, that the
+  session just falsified. Writing the finding up as new leaves that clause standing and
+  understates it: the gap is not unknown, it is documented as harmless.
 - **`CLAUDE.md` and project docs**: add to the section that covers the topic; only
   create a new section when none fits. Match the file's existing voice.
 - **Memory**: one file per fact, plus a one-line pointer in `MEMORY.md`. Update an
