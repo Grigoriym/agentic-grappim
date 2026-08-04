@@ -18,6 +18,7 @@ git clone https://github.com/Grigoriym/agentic-grappim.git ~/proj/grappim/agenti
 
 mkdir -p ~/.claude/skills ~/.claude/agents
 
+ln -s ~/proj/grappim/agentic-grappim/skills/bro                   ~/.claude/skills/bro
 ln -s ~/proj/grappim/agentic-grappim/skills/finalize              ~/.claude/skills/finalize
 ln -s ~/proj/grappim/agentic-grappim/skills/investigate-issue     ~/.claude/skills/investigate-issue
 ln -s ~/proj/grappim/agentic-grappim/skills/update-gradle-wrapper ~/.claude/skills/update-gradle-wrapper
@@ -33,6 +34,7 @@ then each update has to be re-copied.
 
 | Skill | Description |
 |-------|-------------|
+| `bro` | Restates the previous message in plain language — no jargon, no preamble, shorter |
 | `finalize` | End-of-session wrap-up — captures what was learned into the project's `CLAUDE.md`, its docs and memory; a lesson that isn't project-specific is edited straight into the skill here, uncommitted for review |
 | `investigate-issue` | Investigation-first process for bug reports — evidence-based root cause, an investigation doc in `docs/issues/`, options with tradeoffs, then a stop for the user's decision before any code |
 | `update-gradle-wrapper` | Updates the Gradle wrapper to a given version, fetching the SHA-256 checksum from Gradle's distribution server |
