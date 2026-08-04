@@ -21,6 +21,7 @@ mkdir -p ~/.claude/skills ~/.claude/agents
 ln -s ~/proj/grappim/agentic-grappim/skills/bro                   ~/.claude/skills/bro
 ln -s ~/proj/grappim/agentic-grappim/skills/finalize              ~/.claude/skills/finalize
 ln -s ~/proj/grappim/agentic-grappim/skills/investigate-issue     ~/.claude/skills/investigate-issue
+ln -s ~/proj/grappim/agentic-grappim/skills/masvs-review          ~/.claude/skills/masvs-review
 ln -s ~/proj/grappim/agentic-grappim/skills/update-gradle-wrapper ~/.claude/skills/update-gradle-wrapper
 ln -s ~/proj/grappim/agentic-grappim/agents/koin-expert.md        ~/.claude/agents/koin-expert.md
 ```
@@ -36,6 +37,7 @@ then each update has to be re-copied.
 |-------|-------------|
 | `bro` | Restates the previous message in plain language — no jargon, no preamble, shorter |
 | `finalize` | End-of-session wrap-up — captures what was learned into the project's `CLAUDE.md`, its docs and memory; a lesson that isn't project-specific is edited straight into the skill here, uncommitted for review |
+| `masvs-review` | Reviews a mobile app against OWASP MASVS v2 from source and maintains the project's security register in `docs/security/masvs.md` — deliberate deviations get recorded once, with their bounds, instead of being re-flagged every run |
 | `investigate-issue` | Investigation-first process for bug reports — evidence-based root cause, an investigation doc in `docs/issues/`, options with tradeoffs, then a stop for the user's decision before any code |
 | `update-gradle-wrapper` | Updates the Gradle wrapper to a given version, fetching the SHA-256 checksum from Gradle's distribution server |
 
