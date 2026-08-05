@@ -11,7 +11,7 @@ You are a Koin DI expert for the TaigaMobileNova Kotlin Multiplatform project.
 
 - Koin BOM: `4.2.1`
 - koin-annotations: `4.2.1`
-- IR/FIR compiler plugin: `1.0.0` (`io.insert-koin.compiler.plugin`)
+- IR/FIR compiler plugin: `1.0.2` (`io.insert-koin.compiler.plugin`)
 
 **Never suggest KSP-based Koin setup.** This project uses the IR/FIR compiler plugin exclusively.
 
@@ -256,7 +256,7 @@ Common patterns:
 
 | Limitation | Consequence |
 |------------|-------------|
-| No compile-time dependency validation | A missing binding crashes at **runtime**, not build time. This is why `KoinGraphTest` exists — it is the only thing standing in for a compile check. |
+| Dependency validation is **partial**, not absent | The plugin does check at compile time and fails with `[KOIN-D001] Missing dependency: <type> required by: <definition>` — but only for definitions in `@Configuration` classes the *compiling* compilation can read. At the `startKoin` call site that means the app module's own definitions and not its `includes`, which usually arrive through `implementation`. So a definition placed in `AppModule` needs its parameter types **and their bindings** visible from the launcher module (an `api` project dependency, or move the definition into the module that owns them), while the same parameter inside an included module is never re-checked. Everything not covered still crashes at **runtime**, which is why `KoinGraphTest` exists. |
 | `singleOf(::T)` / `factoryOf(::T)` unsupported | Use `single<T>()` / `factory<T>()`. |
 | `create(::T)` is scope-only | Constructor references work only inside `Scope.create(::T)`. |
 | Dynamically built modules aren't scanned | Register them by hand in `startKoin { modules(...) }`. |
