@@ -1,0 +1,23 @@
+templates/CLAUDE.md.template
+  s_414b186aa73a4e::t_729a8cfe6a5d91 167-174,177,184-199
+  s_414b186aa73a4e::t_213f14e7c9caac 175-176,178-183
+skills/finalize/SKILL.md
+  s_414b186aa73a4e::t_9ed9fd3df36c37 136
+  s_414b186aa73a4e::t_b1aa1fc5ebae3e 67-73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "4e461d6c0533282190e1c4f8f72886679b0786c5",
+  "prompts": {},
+  "sessions": {
+    "s_414b186aa73a4e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "36aa5a43-1b88-4e1e-ba61-fac50254935e",
+        "model": "claude-opus-5"
+      },
+      "human_author": "g.mikhalchuk <grigoriy.mikhalchuk@deliveryhero.com>"
+    }
+  }
+}
