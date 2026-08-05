@@ -164,6 +164,39 @@ diff unreviewable. Not dropped. And **not just mentioned in chat: chat is not
 persistence.** Give the entry enough evidence (`file:line`, or a link) that a cold
 session can act on it without re-deriving anything.
 
+### Friction goes in writing too
+
+The rule above is for problems in the **code**. This one is for friction in the
+**tooling**, and it is the one that silently never gets reported: a guessed URL that
+404s, an auth error on something another tool already reaches, a command that needed
+different quoting, a check that confidently returned the wrong answer. The reflex is to
+route around it and say nothing.
+
+Add a line to `docs/frictions.md` before moving on — **create the file if it isn't there**,
+that is not a decision worth pausing over:
+
+```markdown
+# Frictions
+
+Tooling friction hit during work, newest last. One line each. Promoted or fixed
+entries get deleted — see /finalize.
+
+- 2026-08-05 — `rg` with an unquoted `**` glob: zsh expanded it first and failed with
+  "no matches found" before rg ran. Quote the glob, or use `--files`.
+```
+
+One line, past tense, naming the tool and the surprise. Don't stop working to write it
+and don't editorialise. **This is for what you routed around without mentioning** — not
+for failures you were going to report anyway.
+
+At the end of the task, **read the file** and list what you added, with a count, even when
+the count is zero. Read it rather than recalling it: small friction is gone from recall by
+then, which is the whole reason the file exists. And a silent miss must not look like a
+smooth run.
+
+The same friction three times is a fix, not a fourth line — a permission entry, a line in
+this file, or a skill. `/finalize` is where that promotion happens.
+
 ## Settled decisions
 
 Weighed and declined — don't re-propose these.

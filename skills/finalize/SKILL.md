@@ -64,8 +64,13 @@ A project with no such procedure routes exactly as Step 3 says.
 
 ## Step 1. Harvest
 
-Re-read the session and list every fact that was **learned**, not just done. Two kinds
-matter, and the second is the one that gets forgotten.
+**Read `docs/frictions.md` first, if the project keeps one.** Entries written *during* the
+work are the most reliable input this step has — by now, small tooling friction is gone
+from recall, and harvesting it from memory returns nothing. Treat every line as a
+candidate, then filter it in Step 2 like anything else.
+
+Then re-read the session and list every fact that was **learned**, not just done. Two
+kinds matter, and the second is the one that gets forgotten.
 
 **Things** — what the code and tools turned out to be:
 
@@ -128,6 +133,7 @@ outcome; do not manufacture updates.
 | Ongoing goal or constraint not derivable from the repo | memory (`project`) |
 | External URL that will be needed again | memory (`reference`) |
 | A real problem seen and deliberately **not** fixed | the project's deferred/backlog doc — create one if absent |
+| Friction logged three times in `docs/frictions.md` | a real fix — a permissions entry, a `CLAUDE.md` line, or a skill — and the promoted lines leave the file |
 
 `CLAUDE.md` is the default **for conventions and gotchas**. Where the project
 designates a doc for a kind of fact, that doc wins for that kind — an architecture
