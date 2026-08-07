@@ -21,6 +21,9 @@ metadata:
   - process death
   - am kill
   - force-stop
+  - frame timing
+  - perfetto
+  - gfxinfo
 ---
 
 Generic Android/adb technique for verifying a change on a real emulator, written
@@ -178,6 +181,95 @@ doesn't:
   filters, sort order, or list position live in memory, a `force-stop` + relaunch can
   bring the same screen back in a *different* arrangement — re-screenshot after every
   relaunch rather than reusing a pre-kill coordinate.
+
+## Step 4b. Frame-level timing — when a screenshot can't tell you *how long*
+
+A screenshot (or even a "screenshot right after backgrounding the tap") answers "does it
+render." It cannot answer "does it render *fast*," and eyeballing "screen A feels slower
+than screen B" is unreliable enough to get corrected by real data — reach for one of
+these instead of trusting the impression.
+
+**Quick look — `dumpsys gfxinfo`'s raw per-frame timestamps, zero setup:**
+
+```bash
+adb shell dumpsys gfxinfo <package-id> reset
+adb shell input tap X Y
+adb shell dumpsys gfxinfo <package-id> framestats > out.txt
+```
+
+Despite the `framestats` argument, the interesting part is a `---PROFILEDATA---` block
+containing a CSV header and one row per frame with real nanosecond timestamps
+(`HandleInputStart`, `AnimationStart`, `PerformTraversalsStart`, `DrawStart`,
+`FrameCompleted`, …). `FrameCompleted − HandleInputStart` of the last row is a screen's
+real tap-to-settled time — cheap enough to run for both sides of an "A feels slower than
+B" question before touching any code. **The last row in a short capture can carry stale
+values from the ring buffer** (a `FrameCompleted`/`GpuCompleted` timestamp far smaller
+than the row's own `SwapBuffers` — a dead giveaway) for a frame whose GPU-side fields
+were never populated; use `SwapBuffersCompleted` instead when that happens.
+
+**Deeper look — Perfetto, when you need to know *why*, not just *how long*:**
+
+```bash
+adb shell perfetto -o /data/misc/perfetto-traces/t.perfetto-trace -t 8s \
+  sched freq idle am wm gfx view input dalvik hal res memory binder_driver &
+sleep 1.5   # let tracing actually start before the action under test
+adb shell input tap X Y
+sleep 5     # >= the -t duration minus the head start, or the pull races the writer
+adb pull /data/misc/perfetto-traces/t.perfetto-trace
+```
+
+**Don't pull immediately after your own sleeps add up to `-t`'s duration** — the on-device
+process needs a moment past that to flush and close the file; a pull that races it
+silently grabs a 0-byte file with no error. Check the file size (or just `ls` it on
+device) before trusting a pull, and re-pull once it's stopped growing.
+
+Analyze with the `perfetto` Python package's `TraceProcessor` (`pip install perfetto` —
+use a venv, `pip` refuses a bare install as "externally managed" on most distros; the
+first `TraceProcessor(...)` call downloads a `trace_processor_shell` binary from Google
+over the network):
+
+```python
+from perfetto.trace_processor import TraceProcessor
+tp = TraceProcessor(trace='t.perfetto-trace')
+```
+
+Two things that aren't obvious from the schema:
+
+- **The main thread's name is truncated to 15 chars by the Linux `comm` field and is
+  usually *not* `"main"`** — it's the tail end of the package name instead (e.g.
+  `losmobile.debug` for `com.grappim.wallosmobile.debug`). Filter `thread` by
+  `tid = <pid>` (the main thread's tid always equals the process pid), not by name.
+- **`thread_state.state = 'S'` (sleeping) and `'Running'` mean opposite things for a
+  "why is this slow" question, and only one of them is a code bug.** A long `Running`
+  span is the thread genuinely busy computing something — that's a real stall, and the
+  overlapping `slice` rows (join on `thread_track.utid`) name what it was doing. A long
+  `S` span is the thread idle, blocked on I/O or simply out of work — completely normal
+  while waiting on a network response, and *not* evidence of a blocking bug no matter how
+  long it lasts. Check `state` before concluding a gap in rendered frames means the main
+  thread is stuck; it usually means the opposite.
+
+**Forcing a state that depends on real, variable timing — don't race it, force it.**
+Trying to screenshot an in-flight/loading state by timing `sleep` against a real
+network's actual latency wastes attempts the moment that latency isn't constant (a local
+dev server's response time can vary 10ms to 700ms+ run to run, and adb's own
+shell-dispatch overhead adds more jitter neither side accounts for). Cut connectivity
+*before* the action instead, so the in-flight state is guaranteed to hold open long
+enough to screenshot at leisure:
+
+```bash
+adb shell cmd connectivity airplane-mode enable
+adb shell svc wifi disable
+# ... trigger the action, screenshot whenever ...
+adb shell cmd connectivity airplane-mode disable
+adb shell svc wifi enable
+```
+
+This exercises the failure path rather than a slow success, but visually the loading
+state looks identical either way and this is the only version of the screenshot you can
+actually land on the first try. (`adb root` does not work on standard AVD system images
+— "cannot run as root in production builds" — so an iptables-based packet-drop, which
+would preserve the success path by hanging instead of failing, isn't available; network
+toggling is the practical option.)
 
 ## Step 5. Networking, storage, and other device mechanics
 
