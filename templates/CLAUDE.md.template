@@ -151,6 +151,22 @@ Touch only what you must. Clean up only your own mess.
 
 **Every changed line should trace directly to the request.**
 
+### Determinism over process
+
+If a task has one correct, computable answer, use a tool for it. Don't ask the agent to
+follow a fixed procedure by hand.
+
+- A checksum, a sort order, a date calculation, a schema check: write a script or a
+  hook. Call it as a tool.
+- An agent following prose steps can skip a step, or get one wrong. A script cannot.
+- Reserve the agent's judgment for what needs judgment: ambiguous input, a plan, a
+  choice between options.
+- Writing a new skill: find a step that says "always do X the same way." Replace it
+  with a tool call, not a longer instruction.
+
+Ask: "does this step have one right answer, computable without judgment?" If yes,
+write the tool, not the instruction.
+
 ### Goal-driven execution
 
 Turn a task into a verifiable goal — "fix the bug" becomes "write a failing test, then
