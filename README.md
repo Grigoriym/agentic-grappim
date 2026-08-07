@@ -4,22 +4,22 @@ Shared Claude Code skills and agents for grappim projects.
 
 ## How it's wired
 
-**Per project, not per user account.** A project opts in by symlinking the skills it
-wants into its own `.claude/skills/`. Claude Code follows a symlink there and reads
-`SKILL.md` from the target, so the skill still lives in this repo and a `git pull` here
-updates every project that links it.
+A skill lives in this repo; a machine opts in by symlinking it from either
+`~/.claude/skills/` (every project on that machine sees it) or a given project's own
+`.claude/skills/` (only that project does). Claude Code follows either symlink and reads
+`SKILL.md` from the target, so a `git pull` here updates everywhere it's linked, no
+matter which style a given machine uses. This repo doesn't mandate one — different
+machines running it may wire it differently; pick whichever fits and stay consistent on
+that machine.
 
-Nothing is installed into `~/.claude/skills/`. That would make every skill visible in
-**every** session — including unrelated repos — and each one's `description` is loaded
-into context whether or not it is ever used. Scoping per project keeps that cost where
-the skill is actually wanted.
-
-The links are **relative**, so they resolve on any machine where the repos are siblings
-and can be committed to the project:
+A project-scoped link is **relative**, so it resolves on any machine where the repos are
+siblings and can be committed to the project:
 
 ```
 <project>/.claude/skills/finalize -> ../../../agentic-grappim/skills/finalize
 ```
+
+A user-account link is machine-local (typically absolute) and isn't committed anywhere.
 
 ## Setup (new machine / fresh clone)
 
@@ -31,12 +31,21 @@ mkdir -p ~/.claude/agents
 ln -s ~/proj/grappim/agentic-grappim/agents/koin-expert.md ~/.claude/agents/koin-expert.md
 ```
 
-Then, in each project that wants them:
+Then, either every project on the machine:
+
+```bash
+mkdir -p ~/.claude/skills
+for s in bro finalize investigate-issue masvs-review update-gradle-wrapper emulator-testing; do
+  ln -s ~/proj/grappim/agentic-grappim/skills/$s ~/.claude/skills/$s
+done
+```
+
+or just the projects that want them:
 
 ```bash
 cd ~/proj/grappim/<project>
 mkdir -p .claude/skills
-for s in bro finalize investigate-issue masvs-review update-gradle-wrapper; do
+for s in bro finalize investigate-issue masvs-review update-gradle-wrapper emulator-testing; do
   ln -s ../../../agentic-grappim/skills/$s .claude/skills/$s
 done
 ```
@@ -56,6 +65,7 @@ agent. Link, don't vendor.
 | `masvs-review` | Reviews a mobile app against OWASP MASVS v2 from source and maintains the project's security register in `docs/security/masvs.md` — deliberate deviations get recorded once, with their bounds, instead of being re-flagged every run |
 | `investigate-issue` | Investigation-first process for bug reports — evidence-based root cause, an investigation doc in `docs/issues/`, options with tradeoffs, then a stop for the user's decision before any code |
 | `update-gradle-wrapper` | Updates the Gradle wrapper to a given version, fetching the SHA-256 checksum from Gradle's distribution server |
+| `emulator-testing` | Generic adb/`uiautomator` technique for verifying a change on a real Android emulator — screenshots, coordinate scaling, process-death testing — kept package-name-agnostic, with each project's own package id, AVD name and app-specific gotchas maintained in that project's `docs/EMULATOR_TESTING.md` |
 
 ### `agents/`
 
@@ -70,8 +80,17 @@ agent. Link, don't vendor.
    Add **`disable-model-invocation: true`** — every skill here is manual-only, invoked
    as `/<name>` and never auto-triggered. It also keeps the description out of context
    in every unrelated session.
-2. Link it in: `ln -s ~/proj/grappim/agentic-grappim/skills/<name> ~/.claude/skills/<name>`
+2. Link it in, either style (see "How it's wired"): `ln -s
+   ~/proj/grappim/agentic-grappim/skills/<name> ~/.claude/skills/<name>`
 3. Add a row to the table above, and commit.
+
+**If a skill needs project-specific facts to be useful** (package ids, screen names,
+server addresses, an AVD name), keep the skill itself generic and have it read/maintain
+a project-local doc for those facts (`docs/security/masvs.md`, `docs/EMULATOR_TESTING.md`)
+rather than baking one project's specifics into the skill or duplicating the skill's
+generic technique into every project's own doc. `masvs-review` and `emulator-testing`
+are the two skills built this way — copy their Step 0 ("read the project doc first, create
+it from a template if absent") rather than reinventing the split.
 
 A skill must be a folder containing `SKILL.md`. A loose `.md` file in `skills/` will
 not be picked up.
@@ -112,5 +131,6 @@ MASTG test mapping is read live from the OWASP repo rather than copied.
 | MealieMobile | `../MealieMobile/` |
 | TaigaMobileNova | `../TaigaMobileNova/` |
 | HateItOrRateIt | `../HateItOrRateIt/` |
+| WallosMobile | `../wallosmobile/` |
 
 Listed for reference only — no wiring lives in these projects.
