@@ -27,6 +27,14 @@ from the first, and it will.
 - Versions → <the dependency manifest>
 - Architecture rationale → <`docs/…`>
 
+**Not a growing catalogue, either.** A convention that fits in a sentence or two, with
+at most one example, belongs here. The moment a rule starts accumulating dated,
+confirmed cases ("also true for X (date)... and for Y (date)...") or a worked-example
+script, it has become reference material earned by a specific investigation, not a
+day-to-day rule every session needs to read — split it into its own doc under `docs/`
+and leave a one-line pointer where the rule used to live. Do this the first time a
+section outgrows the rest of the file, not after several more sessions have added to it.
+
 ## Shared skills and agents
 
 Skills and agents live in the **`agentic-grappim`** repo and are symlinked into
