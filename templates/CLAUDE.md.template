@@ -151,6 +151,22 @@ Touch only what you must. Clean up only your own mess.
 
 **Every changed line should trace directly to the request.**
 
+### Don't break production in favor of tests
+
+Production code must not be shaped by testing needs. If a code path is flaky or can't
+be observed deterministically as written, fix or remove the *test* — don't add a seam,
+injectable parameter, or abstraction to production code purely so a test can control
+it. This holds even when the change is small, additive, and provably safe (e.g. a
+defaulted constructor parameter verified not to affect the DI graph) — the question is
+not "is this change safe," it's "does this belong in production code at all."
+
+Prefer, in order: (1) a lower-level test that already covers the behavior
+deterministically without the racy synchronization; (2) simplify the test to avoid it;
+(3) delete the test and say so plainly, rather than leaving a known flake undocumented.
+
+Always ask before adding any production-code testability seam, even a well-verified
+one.
+
 ### Determinism over process
 
 If a task has one correct, computable answer, use a tool for it. Don't ask the agent to
