@@ -79,7 +79,11 @@ grep -rn 'http://' --include=*.kt --include=*.xml . | grep -v /build/
      anything once a flag is set?
   3. Is the pin per-**certificate**, or per-host? Per-host means a regenerated cert on the
      same address is silently accepted — which is the failure trust-on-first-use is
-     supposed to prevent. The check is to regenerate the leaf and confirm the app objects.
+     supposed to prevent. Partly answerable from source: find the trust-store lookup the
+     override consults and check its key — `(host, fingerprint)` is per-cert, `host` alone
+     is per-host. A unit test that pins one cert and asserts a second cert on the same host
+     is rejected is as good as source gets. Only the live-handshake proof — regenerate the
+     leaf, restart, confirm the app actually objects — needs a device.
 - **`HostnameVerifier` returning true unconditionally** has no legitimate version. Finding.
 - **Ktor specifics**: the engine differs per platform (OkHttp/CIO/Darwin), so TLS config
   is per-actual. A trust override wired into one engine and not another is a per-platform

@@ -135,6 +135,10 @@ Then:
 - A finding worth fixing now → fix it, or write it into the project's
   `docs/revisit.md` (or its equivalent). Not chat.
 - A finding you fixed → it leaves the register. Don't accumulate history there; git has it.
+  If the finding was named prominently enough beforehand (a plan doc, an earlier session's
+  scoping) that a reader would expect to find it and wonder why it's missing, leave one line
+  in a **Notes** section at the bottom of the category saying it was fixed and where — not a
+  row in Open or Accepted, just enough that the absence doesn't read as an oversight.
 
 ## Step 5. Report
 
