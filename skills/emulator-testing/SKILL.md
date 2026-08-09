@@ -47,6 +47,16 @@ by reading the app's `build.gradle.kts`/manifest and `~/Android/Sdk` (`emulator
 
 ## Step 1. Boot and screenshot
 
+**Check `adb devices -l` before assuming a bare `adb`/`./gradlew installXxx` call reaches
+the AVD.** A real phone connected over USB is a device too, and if it's the only one
+attached, an install task and every unqualified `adb` command silently go to *it* instead
+of the emulator — with no error to flag the mix-up. Worse, it may be screen-locked with a
+PIN nobody here has: a screenshot of a PIN pad is not the AVD failing to boot, it's the
+wrong device answering. Don't try to unlock or guess a PIN on hardware that isn't this
+setup's own test device. Boot the AVD explicitly and pass every subsequent command
+`-s <avd-serial>` (`emulator-5554` by default) once more than one device might be present,
+rather than relying on adb's single-device default.
+
 Headless, no snapshot, no interaction needed beyond `input tap`:
 
 ```bash
