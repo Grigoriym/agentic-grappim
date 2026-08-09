@@ -168,7 +168,7 @@ doesn't:
 
   ```bash
   adb shell input keyevent KEYCODE_HOME && adb shell am kill <package-id>
-  adb shell monkey -p <package-id> -c android.intent.category.LAUNCHER 1
+  adb shell am start -n <package-id>/<fully-qualified-activity-name>
   ```
 
   `am kill` keeps the task and any saved-instance-state; `force-stop` discards both. Pick
@@ -176,17 +176,28 @@ doesn't:
   `rememberSaveable` state, `force-stop` for anything that has to survive a full cold
   start from disk (a local database, a persisted preference).
 
-  **Run the kill cycle once, from a clean task.** Every `monkey … LAUNCHER` launch after
-  an `am kill` *adds* an activity instance to the existing task rather than replacing it,
-  and once there is more than one, a relaunch starts a fresh activity instead of
-  restoring the killed one — so a second or third cycle in the same session restores
-  nothing and reads as a regression that isn't real. `adb shell am force-stop
-  <package-id>` first to reset the task, relaunch, navigate back to the screen under
-  test, and only then background + `am kill`. `dumpsys activity activities | grep
-  <package-id>` (the `sz=`/`numActivities` count) tells you which situation you're in.
-  An outbound link (a browser opened from inside the app) leaves the same kind of dirty
-  multi-activity task behind — `force-stop` both apps before starting a cycle that
-  follows one.
+  **Relaunch with `am start -n`, not `monkey … LAUNCHER`.** For a `standard`-launch-mode
+  root activity (no `launchMode` in the manifest — the common case), `am start -n` after
+  an `am kill` prints `Warning: Activity not started, its current task has been brought
+  to the front` and correctly resumes the killed activity's own record (`sz=` stays at
+  1), which is what actually exercises `onSaveInstanceState`/process-death restore.
+  `monkey -c android.intent.category.LAUNCHER` does **not** get this task-reuse
+  treatment and instead **starts a brand-new activity instance on top on every call, including
+  the first one after a kill** — confirmed by checking `pidof` was genuinely empty before
+  the relaunch and `dumpsys activity activities`'s `sz=` count going 1→2 on a single
+  monkey call, immediately after a clean single-instance task. A screen that renders as
+  the app's start destination after this looks exactly like a back-stack-restore bug but
+  is actually the relaunch technique creating a fresh activity instead of restoring the
+  killed one — re-run with `am start -n` before concluding restore is broken.
+
+  **Run the kill cycle once, from a clean task**, regardless of which relaunch command is
+  used: repeatedly killing and relaunching without resetting first can still leave stale
+  task state behind on some OS/AVD combinations. `adb shell am force-stop <package-id>`
+  first to reset the task, relaunch, navigate back to the screen under test, and only
+  then background + `am kill`. `dumpsys activity activities | grep <package-id>` (the
+  `sz=`/`numActivities` count) tells you which situation you're in. An outbound link (a
+  browser opened from inside the app) leaves the same kind of dirty multi-activity task
+  behind — `force-stop` both apps before starting a cycle that follows one.
 - **Coordinates and in-memory state don't survive a process boundary either.** If
   filters, sort order, or list position live in memory, a `force-stop` + relaunch can
   bring the same screen back in a *different* arrangement — re-screenshot after every
