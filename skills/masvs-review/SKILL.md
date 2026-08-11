@@ -85,6 +85,15 @@ Rules that keep the output honest:
   which a self-hosted client does not have.
 - **A deliberate weakening is a finding only if it is unbounded or undocumented.**
   Report what bounds it, then propose the register row.
+- **Before proposing "the standard fix" for a pattern that looks like an oversight,
+  `git log --follow` the file.** A weakening that has no comment explaining it in the
+  current source may still be deliberate — the standard fix may have already been
+  built and reverted in an earlier commit, with the constraint spelled out in that
+  revert's message (a third-party API limitation, a config dependency outside the
+  app's control). Recommending it again without checking wastes the fix on already-
+  abandoned work; found this way once, an embedded-WebView OAuth flow that looked like
+  a plain RFC 8252 miss turned out to be a revert of a Custom-Tabs/loopback attempt,
+  blocked by the OAuth provider allowing only one registered callback URL.
 
 ## Step 3. Separate what you verified from what you didn't
 

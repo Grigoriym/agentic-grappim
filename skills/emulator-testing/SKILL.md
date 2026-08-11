@@ -202,6 +202,16 @@ doesn't:
   filters, sort order, or list position live in memory, a `force-stop` + relaunch can
   bring the same screen back in a *different* arrangement — re-screenshot after every
   relaunch rather than reusing a pre-kill coordinate.
+- **A modern, high-API AVD can silently mask an IME-insets/`windowSoftInputMode` bug
+  that a real device on an older API hits.** A missing `android:windowSoftInputMode`
+  on the activity broke `imePadding()`-based layouts (content rendered blank behind
+  the keyboard) on a real Android 10/API 29 device, while a same-app, same-screen test
+  on a current-API AVD never reproduced it at all — that AVD's own edge-to-edge insets
+  dispatch delivered usable IME insets even without the manifest flag. A fix or a "no
+  repro" verdict for anything keyboard/insets-shaped (`imePadding`, `navigationBars`,
+  `WindowInsets.ime`) that was only checked against one modern-API AVD is not yet
+  verified for a real user on an older OS — say so rather than calling it confirmed,
+  and prefer a real device or a lower-API AVD when one is available.
 
 ## Step 4b. Frame-level timing — when a screenshot can't tell you *how long*
 
@@ -253,6 +263,11 @@ over the network):
 from perfetto.trace_processor import TraceProcessor
 tp = TraceProcessor(trace='t.perfetto-trace')
 ```
+
+**`QueryResultIterator.as_pandas_dataframe()` fails with "pandas/numpy dependency missing"**
+even in a fresh venv with only `perfetto` installed — that package doesn't pull them in. Iterate
+the query result directly instead (`for row in tp.query("select ..."): row.some_column`), which
+needs neither and is enough for count/sum/max-style aggregate queries.
 
 Two things that aren't obvious from the schema:
 

@@ -42,6 +42,17 @@ grep -rln 'Keystore\|SecretKey\|Cipher\.getInstance\|KeyGenParameterSpec' --incl
   `allowBackup="true"` with a stored credential means `adb backup` and cloud backup carry
   it off the device. A common inversion is `false` in the debug manifest and `true` in
   main — backwards, since debug is the build with nothing worth taking.
+  **Two things bound this before it's automatically Open:** whether the value is already
+  ciphertext by the time it reaches the file (a Keystore-backed cipher over the credential,
+  checked above, means the backup carries nothing usable — the key doesn't travel with it),
+  and whether `dataExtractionRules`/`fullBackupContent` could even scope *out* just that key.
+  A `PreferenceDataStoreFactory` store is typically one file for the whole module — every key
+  in it shares the same file, so exclusion is file-granularity, not key-granularity. If a
+  non-sensitive value (theme, a UI flag) shares the file with the encrypted credential,
+  excluding the file trades away backup/restore for the harmless values to protect an asset
+  that's already inert. Grep for the file name (`preferencesDataStoreFile(...)`,
+  `PreferenceDataStoreFactory.create*`) to see whether it's shared before recommending the
+  exclusion as "the fix."
 - **Logs.** The message lambda in a `logcat`-style facade defers construction but does not
   redact. Check both the call sites and whether the release build installs a backend at all:
 
@@ -57,7 +68,16 @@ grep -rln 'Keystore\|SecretKey\|Cipher\.getInstance\|KeyGenParameterSpec' --incl
 - A key in source, in a build config field, or in the version catalogue is the finding.
   A key derived at first run and held in the Keystore is not.
 - `KeyGenParameterSpec` — check the purposes, the block mode, and whether an IV is reused
-  across encryptions. A fixed IV with AES-GCM is a real break, not a style point.
+  across encryptions. A fixed IV with AES-GCM is a real break, not a style point. **For an
+  `AndroidKeyStore`-backed key, "check for IV reuse" is really "check that
+  `.setRandomizedEncryptionRequired(false)` is never called"** — the provider *enforces* a
+  fresh random IV per `ENCRYPT_MODE` init by default and won't accept a caller-supplied one at
+  all unless that flag turns the guarantee off. Absence of the flag is the finding of "no reuse
+  possible," not just "no reuse observed."
+- **Key size**: if `KeyGenParameterSpec.Builder` never calls `.setKeySize()`, the real size comes
+  from the provider's own default, not from anything in the app's source — say so rather than
+  assuming 256-bit, and put confirming the actual generated size (`KeyInfo.getKeySize()`, needs a
+  device) in the third table rather than the passing list.
 - **Don't grade platform TLS here.** That's MASVS-NETWORK.
 
 ## MASVS-NETWORK
@@ -115,16 +135,31 @@ grep -rln 'WebView\|javaScriptEnabled\|addJavascriptInterface\|loadUrl' --includ
 
 - **`minSdk`** is MASVS-CODE-1. A low floor is a reach decision, not an oversight — bound it.
 - **MASVS-CODE-3 is usually the real gap.** Nothing in a plain Gradle setup checks the
-  version catalogue against an advisory feed. Check for a scanner before assuming:
+  version catalogue against an advisory feed. Check for a scanner before assuming — include
+  `renovate` and `.json` (Renovate's own config is `renovate.json`, and its config file is
+  easy to grep right past if the pattern only covers `.kts`/`.yml`/`.toml`):
 
   ```bash
-  grep -rn 'dependencyCheck\|osv\|snyk\|dependabot' --include=*.kts --include=*.yml --include=*.toml .
-  ls .github/dependabot.yml 2>/dev/null
+  grep -rn 'dependencyCheck\|osv\|snyk\|dependabot\|renovate' --include=*.kts --include=*.yml --include=*.toml --include=*.json .
+  ls .github/dependabot.yml renovate.json .github/renovate.json 2>/dev/null
   ```
+
+  A present `renovate.json` is not automatically a pass: Renovate's OSV-based vulnerability
+  scanning (`osvVulnerabilityAlerts`) is opt-in, not on by default even under
+  `config:recommended` — check the file actually sets it before crediting the control. If the
+  repo is on GitHub, `gh api repos/OWNER/REPO/vulnerability-alerts` (404 body says "disabled",
+  success means enabled) tells you directly whether GitHub's own native Dependabot alerts are
+  on — faster than guessing from the absence of a `dependabot.yml`, which only controls version-
+  update PRs and is a separate feature from the security-alert toggle.
 
 - **MASVS-CODE-4**: a server response is untrusted input even when the user owns the
   server. Check that the deserializer tolerates unknown and null fields, and that HTML or
-  URLs from the server are escaped before rendering or before being followed.
+  URLs from the server are escaped before rendering or before being followed. In a Compose app,
+  also grep for `LocalUriHandler` / `uriHandler.openUri(`: on Android this launches an implicit
+  `ACTION_VIEW` intent with the string as-is, so a call site fed server- or other-user-supplied
+  text (a URL-type custom field, a link inside rendered markdown) with no scheme allowlist is a
+  real finding — an attacker-chosen `intent://`/other-scheme value can deep-link into another
+  installed app on a single tap, not just open a browser.
 
 ## MASVS-PRIVACY
 
