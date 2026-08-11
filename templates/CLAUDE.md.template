@@ -133,6 +133,9 @@ Don't assume. Don't hide confusion. Surface tradeoffs.
 - If multiple interpretations exist, present them — don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
+- **An answer is not an instruction to act.** If the user states a preference or decision that a
+  later, not-yet-requested step will need, record it for when that step is asked for — don't treat
+  it as authorization to run the step now.
 
 ### Simplicity first
 
