@@ -35,7 +35,7 @@ Then, either every project on the machine:
 
 ```bash
 mkdir -p ~/.claude/skills
-for s in bro finalize investigate-issue masvs-review update-gradle-wrapper emulator-testing; do
+for s in bro finalize investigate-issue masvs-review update-gradle-wrapper emulator-testing android-baseline-profile; do
   ln -s ~/proj/grappim/agentic-grappim/skills/$s ~/.claude/skills/$s
 done
 ```
@@ -45,7 +45,7 @@ or just the projects that want them:
 ```bash
 cd ~/proj/grappim/<project>
 mkdir -p .claude/skills
-for s in bro finalize investigate-issue masvs-review update-gradle-wrapper emulator-testing; do
+for s in bro finalize investigate-issue masvs-review update-gradle-wrapper emulator-testing android-baseline-profile; do
   ln -s ../../../agentic-grappim/skills/$s .claude/skills/$s
 done
 ```
@@ -66,6 +66,7 @@ agent. Link, don't vendor.
 | `investigate-issue` | Investigation-first process for bug reports — evidence-based root cause, an investigation doc in `docs/issues/`, options with tradeoffs, then a stop for the user's decision before any code |
 | `update-gradle-wrapper` | Updates the Gradle wrapper to a given version, fetching the SHA-256 checksum from Gradle's distribution server |
 | `emulator-testing` | Generic adb/`uiautomator` technique for verifying a change on a real Android emulator — screenshots, coordinate scaling, process-death testing — kept package-name-agnostic, with each project's own package id, AVD name and app-specific gotchas maintained in that project's `docs/EMULATOR_TESTING.md` |
+| `android-baseline-profile` | Sets up (or diagnoses) an Android Baseline Profile / Macrobenchmark module to remove JIT warm-up jank on cold navigation — the `com.android.test` producer module, `BaselineProfileRule` journeys, and the easy-to-miss "generated but never applied" `profileinstaller` gap |
 
 ### `agents/`
 
