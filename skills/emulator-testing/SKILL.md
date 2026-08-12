@@ -74,6 +74,14 @@ package. If the app ships multiple flavors/variants with different application i
 pick one for day-to-day verification (they're usually identical besides the id) and
 record which in the project doc rather than re-deriving it every session.
 
+**A Gradle-run instrumented suite (`connectedAndroidDeviceTest`/`connectedAndroidTest`) against
+this same emulator can fail with `NoSuchMethodException:
+android.hardware.input.InputManager.getInstance` even though the code under test is fine.** An
+old `androidx.test.espresso:espresso-core` (transitively pulled in below ~3.6, commonly by
+`androidx.compose.ui:ui-test-junit4`) reflects for a method removed on API 34+; a modern AVD
+(API 34+) hits this on the first run. Force a newer `espresso-core` (3.6.1+) as a direct
+dependency of the test source set rather than debugging the test itself.
+
 ## Step 2. Tap accurately
 
 **`screencap`'s image is scaled relative to the device's real pixel grid.** Coordinates
@@ -125,11 +133,16 @@ value and sends debugging in the wrong direction. Compare the field's visible co
 known-good attempt before believing a validation error is about the *value* rather than
 the *input method*.
 
-Clearing a field to retry: `input keycombination 113 29` (Ctrl+A) then
-`input keyevent KEYCODE_DEL`. On the last field, `input keyevent KEYCODE_ENTER` often
-submits the form if it wires `ImeAction.Done` to the submit action — cheaper than
-hunting for a submit button's coordinates under an open keyboard, worth trying before
-assuming it doesn't apply.
+**Clearing a field to retry: `input keycombination 113 29` (Ctrl+A) does not reliably
+select-all in a Compose `OutlinedTextField`/`BasicTextField`** — confirmed on a
+Compose Multiplatform app, where it deleted only a few trailing characters instead of
+selecting everything, leaving the field a corrupted mix of old and new text once new
+text was typed over the partial selection. Use `input keyevent KEYCODE_MOVE_END`
+followed by a run of ~40 individual `input keyevent KEYCODE_DEL` calls instead — slower
+but actually clears the field regardless of what framework renders it. On the last
+field, `input keyevent KEYCODE_ENTER` often submits the form if it wires
+`ImeAction.Done` to the submit action — cheaper than hunting for a submit button's
+coordinates under an open keyboard, worth trying before assuming it doesn't apply.
 
 **A fresh emulator boot can pop a first-run tutorial** (a stylus tutorial on some Pixel
 AVDs, a setup wizard screen) **over the first field tapped**, and it eats every tap
@@ -237,6 +250,10 @@ B" question before touching any code. **The last row in a short capture can carr
 values from the ring buffer** (a `FrameCompleted`/`GpuCompleted` timestamp far smaller
 than the row's own `SwapBuffers` — a dead giveaway) for a frame whose GPU-side fields
 were never populated; use `SwapBuffersCompleted` instead when that happens.
+**A `9Xth gpu percentile` that lands suspiciously round and huge (e.g. exactly `4950ms`,
+the histogram's own top bucket boundary) on an AVD running `-gpu swiftshader_indirect`
+is the histogram's overflow bucket catching frames whose GPU-completion timestamp was
+never populated by the software renderer — not a real multi-second GPU frame.**
 
 **Deeper look — Perfetto, when you need to know *why*, not just *how long*:**
 
@@ -269,8 +286,14 @@ even in a fresh venv with only `perfetto` installed — that package doesn't pul
 the query result directly instead (`for row in tp.query("select ..."): row.some_column`), which
 needs neither and is enough for count/sum/max-style aggregate queries.
 
-Two things that aren't obvious from the schema:
+Three things that aren't obvious from the schema:
 
+- **`actual_frame_timeline_slice` is system-wide, not scoped to the app under test** —
+  an unfiltered query mixes in SurfaceFlinger, systemui, the launcher, and
+  `system_server`'s own frames alongside the app's. A jank percentage computed without
+  filtering overstates or understates the app's real number. Join through `process`
+  first: `select afts.* from actual_frame_timeline_slice afts join process p on
+  afts.upid = p.upid where p.name = '<package-id>'`.
 - **The main thread's name is truncated to 15 chars by the Linux `comm` field and is
   usually *not* `"main"`** — it's the tail end of the package name instead (e.g.
   `losmobile.debug` for `com.grappim.wallosmobile.debug`). Filter `thread` by
@@ -309,6 +332,17 @@ toggling is the practical option.)
 
 ## Step 5. Networking, storage, and other device mechanics
 
+- **A default AVD's data partition (often 6G) can fill up fast once several build
+  variants coexist on it** — a debug build, a release build, a `nonMinifiedRelease`
+  benchmark variant, and a `connectedAndroidTest` target APK together hit 93% full on
+  one AVD and made a Gradle-driven `connectedAndroidTest`/macrobenchmark run fail with
+  `IOException: Requested internal only, but not enough space` (`adb shell df /data`
+  confirms before assuming the test itself is broken). **Editing `disk.dataPartition.size`
+  in the AVD's `config.ini` does not resize an already-created `userdata-qemu.img`** —
+  kill the emulator and relaunch with both `-wipe-data` and `-partition-size <MB>`
+  together (e.g. `-wipe-data -partition-size 12288` for 12G) to actually recreate the
+  partition at the new size. This wipes the AVD, so anything seeded on it (a login
+  session, planted storage state) needs redoing after.
 - **`localhost` from the emulator is the emulator itself** — reach the host machine at
   `10.0.2.2` (e.g. a local dev server on `:8080` is `http://10.0.2.2:8080` from the
   app). If commands run through a sandboxed Bash tool that blocks loopback, `curl` to
