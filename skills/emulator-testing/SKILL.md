@@ -307,6 +307,36 @@ Three things that aren't obvious from the schema:
   long it lasts. Check `state` before concluding a gap in rendered frames means the main
   thread is stuck; it usually means the opposite.
 
+**What changes on a real device vs. the AVD.** `dumpsys gfxinfo` works identically and its
+numbers are clean — no histogram-overflow or ring-buffer artifacts (those are
+software-renderer-specific, see above). Perfetto is where real devices diverge:
+
+- **Whether the deep Perfetto capture works at all is a per-device OEM SELinux/ftrace
+  policy question, not something `ro.build.type`/`ro.debuggable` predicts.** Two `user`
+  (non-rooted) devices can differ completely: one denies tracing outright
+  (`adb shell ls /sys/kernel/debug/tracing/` → `Permission denied` on nearly every entry,
+  app-level slices like `Choreographer#doFrame` totally absent even though the capture
+  "succeeds" with no error), the other works fully. Check
+  `adb shell id | grep readtracefs` before trusting — or debugging the absence of —
+  app-level slices on a new device; its presence/absence is the actual predictor.
+- **`actual_frame_timeline_slice` additionally needs API 31+** (the SurfaceFlinger
+  frame-timeline API added in Android 12), independent of the ftrace-permission question
+  above. Run `select count(*) from actual_frame_timeline_slice` before treating an empty
+  result as "no jank found" rather than "wrong API level for this table."
+- **`dumpsys gfxinfo`'s `Number High input latency` counter is unreliable when the tap/swipe
+  was synthetic (`adb shell input tap`/`swipe`).** It fired on the large majority of frames
+  even during a capture whose real frame-duration percentiles were excellent (90th
+  percentile 8-10ms) and a Perfetto capture of the same run confirmed the actual worst
+  frame was ~10ms — synthetic touch injection doesn't match the timestamp cadence this
+  counter expects from a real finger. Don't use it as a jank signal from this harness; the
+  percentile/histogram frame-duration numbers are the trustworthy part of a `gfxinfo`
+  capture regardless of input source.
+- **A finding on one real device doesn't transfer to another without checking** — device
+  age/GPU can be the dominant factor. Severe jank reproduced reliably on an older,
+  weaker-GPU device and did not reproduce at all on a newer flagship running the identical
+  APK and journey. Treat a single real device's result as that device's result, not as
+  "real hardware" in general, until a second device agrees.
+
 **Forcing a state that depends on real, variable timing — don't race it, force it.**
 Trying to screenshot an in-flight/loading state by timing `sleep` against a real
 network's actual latency wastes attempts the moment that latency isn't constant (a local

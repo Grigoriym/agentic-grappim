@@ -1,0 +1,26 @@
+# Example kover-rank.py excludes file. Copy this to a project-local path (e.g.
+# docs/testing/kover-excludes.txt) and edit it to match your own root build.gradle.kts
+# `kover { reports { filters { excludes { ... } } } }` block.
+#
+# One pattern per line. `#` starts a comment. A `package:` prefix marks a package-prefix
+# pattern (matches that package and all its subpackages); everything else is a class-suffix
+# pattern — write Kover's `**.*Foo` as just `Foo` here.
+
+# --- class suffixes (data layer, DI boilerplate, generated code, UI/nav plumbing) ---
+Api
+ApiImpl
+DTO
+Repository
+Module
+Exception
+App
+Activity
+Screen
+Widget
+Dialog
+Destination
+NavHost
+ComposableSingletons
+
+# --- generated/no-logic packages ---
+package:com.example.app.strings.generated.resources

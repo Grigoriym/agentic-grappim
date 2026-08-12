@@ -42,6 +42,16 @@ Compose recomposition storm — fix that; a Baseline Profile does not touch it, 
 building the module below on a hunch instead of evidence is real Gradle-wiring cost
 for possibly nothing.
 
+**Capture the `VerifyClass`/JIT-cold evidence on the same build variant a profile would
+actually ship on (R8-minified release), not debug.** R8 shrinking on release can already
+strip most of the class graph that costs `VerifyClass` time on an unshrunk debug build —
+confirmed on a real device: a debug build showed a 289ms worst frame dominated by
+`VerifyClass` slices, but the same journey on the release build showed near-zero
+`VerifyClass` cost (2 slices, 0.10ms total) with or without a profile installed. The
+debug-build finding didn't transfer; there was nothing left on release for a Baseline
+Profile to amortize. Re-run Step 0's evidence-gathering against a release build before
+committing to this fix.
+
 ## Step 1. Add the producer module
 
 It's the one module type that is neither a KMP target nor a shared-convention-plugin
@@ -80,6 +90,12 @@ live rather than assumed from docs:
 - **Generation runs against a real connected device** (`baselineProfile {
   useConnectedDevices = true }`) — reuse whatever AVD/device on-device verification
   already uses rather than provisioning a separate Gradle Managed Device.
+- **The target app module needs the `androidx.baselineprofile` *consumer* plugin too, not
+  just this producer module.** Without `alias(libs.plugins.androidx.baselineprofile)` in
+  the app module's own `plugins {}` plus `baselineProfile(projects.benchmark)` in its
+  `dependencies {}`, `generate<Variant>BaselineProfile` doesn't exist as a task on the app
+  module at all — there's nowhere for the generated profile to land, even though the
+  `@Test` lives in this producer module and runs fine on its own.
 - **Watch AVD disk space once this module coexists with debug/release builds.** A
   debug build, a release build, a `nonMinifiedRelease` benchmark variant and a
   `connectedAndroidTest` target APK together can fill a default (often 6G) data
@@ -242,6 +258,17 @@ adb shell dumpsys package <package-id> | grep status   # re-check after this
 ```
 
 ## Step 5. Re-verify against the original complaint, not a proxy
+
+**When the re-verification is a before/after A/B (not just "did it get better"), the
+"before" capture must never have had `cmd package compile` called on it, not even with
+`-m verify`.** `cmd package compile -m verify -f` runs `dex2oat`'s verification pass ahead
+of time and writes the result into the vdex — exactly the cost a plain `adb install`
+otherwise leaves for ART to pay lazily on every cold start. Forcing it before the "before"
+capture (even intending a neutral baseline) eliminates the very `VerifyClass` cost the A/B
+exists to measure, and both sides then read as "already fast" for the wrong reason. Start
+"before" from a genuinely untouched install (`adb uninstall` then `adb install`, confirm
+`dumpsys package <id> | grep status` shows `[status=verify] [reason=install]`) and only
+call `cmd package compile -m speed-profile -f` for "after."
 
 Re-measure with the `emulator-testing` skill's Step 4b technique, against the
 **same** journey the original complaint named — not a different screen that happened
