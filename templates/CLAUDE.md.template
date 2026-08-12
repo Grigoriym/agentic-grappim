@@ -121,6 +121,17 @@ Where it yields: **uncertainty and conditions win over brevity.** If a claim hol
 under some condition, say the condition even if the sentence gets long. A short
 sentence that drops the caveat is wrong, not simple.
 
+## Chat replies
+
+Answer in chat as a tl;dr: short, plain, human, straightforward. I will not read a
+novel there — give me the result and the next step, not the reasoning that got you
+there.
+
+- This is about chat only. Docs, code, comments, commit messages: write them however
+  the artifact and this file's other rules call for.
+- If something genuinely doesn't compress — a real tradeoff, a caveat that changes the
+  answer — explain it in full. Don't let that become the default excuse for length.
+
 ## Working agreements
 
 **Tradeoff:** these bias toward caution over speed. For trivial tasks, use judgment.
