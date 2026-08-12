@@ -67,9 +67,25 @@ Rules:
 
 - **Every claim carries evidence** — a `file:line`, a command's output, or a quote
   from a spec. If something is inference rather than verified, label it as inference.
+- **Grep the literal error text in the source that emitted it, before theorising about
+  the category of failure.** An error message is written by whoever *caught* the
+  exception, not by whatever failed, so it routinely names the wrong subsystem — a
+  catch-all in an auth filter that wraps the rest of the chain reports every downstream
+  bug as a permissions error. Finding the one line that owns the string tells you which
+  handler you're inside, and therefore which failures are *excluded* (anything a
+  narrower handler would have caught). That is usually a faster narrowing than reading
+  the happy path forward.
 - **Read the other side of the boundary.** If the bug involves a server, API, or
   library, read that source or its spec. Do not reason from memory about what a
-  third party does.
+  third party does. **Where the contract is deliberately generic — name/value pairs,
+  a map, `any`, a plugin payload — the schema gives you shape but not content, so it
+  cannot tell you whether a given field is actually present. Capture one real
+  response.**
+  **And when behaviour is driven by config that "lives in a database" or is generated,
+  find the repo that *writes* it before concluding it can't be read.** Consumer plus
+  producer is rarely the whole system; a pipeline, a seeding job or an
+  infra-as-code repo usually authors the thing, in reviewable files, for every case at
+  once. "Only a live call can tell us" is a claim about which repos you have opened.
 - **Try to falsify your own hypothesis.** Ask what would have to be true for it to be
   wrong, then go check that specific thing.
 - **Prefer reproducing.** A test that fails for the reported reason is the strongest
