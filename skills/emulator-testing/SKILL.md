@@ -211,6 +211,13 @@ doesn't:
   `sz=`/`numActivities` count) tells you which situation you're in. An outbound link (a
   browser opened from inside the app) leaves the same kind of dirty multi-activity task
   behind — `force-stop` both apps before starting a cycle that follows one.
+- **Confirming *which* URL an outbound link opened is a logcat check** (`adb logcat -c`,
+  tap, then `grep "ActivityTaskManager.*START"` for the line's `dat=`/`capturedLink=`
+  field) rather than a screenshot — a browser's own first-run page looks the same
+  regardless of destination. **But `ActivityTaskManager` elides a long `dat=` value**
+  (e.g. `dat=https://github.com/...`, confirmed truncated rather than the real value) —
+  this only reliably confirms a short URL. Past a short path, screenshot the browser's
+  address bar instead (tap it to expand the display) and read the real value from there.
 - **Coordinates and in-memory state don't survive a process boundary either.** If
   filters, sort order, or list position live in memory, a `force-stop` + relaunch can
   bring the same screen back in a *different* arrangement — re-screenshot after every
