@@ -171,6 +171,16 @@ grep -rln 'WebView\|javaScriptEnabled\|addJavascriptInterface\|loadUrl' --includ
   inside the app? A disconnect action that clears the key but leaves a populated database
   lets the next account see the previous one's rows — a privacy finding with a functional
   bug attached.
+- **Grep every catch site that logs at the priority the crash reporter's own sink forwards**
+  (find that filter first — e.g. a Timber `Tree` that only acts on `Log.ERROR` with a non-null
+  `throwable`) **and check what rides in the throwable itself, not just the log message.** A caught
+  exception's own `.message` can carry more than the surrounding text admits — a deserializer's
+  decode-failure message embedding the full offending response body verbatim is a real example,
+  found by planting a marker string and running the catch block, not by reading the message text
+  at the call site. Passing that exception straight through as the crash reporter's `throwable`
+  leaks it off-device even though nothing "sensitive-looking" appears at the log call itself. The
+  fix is a scrubbed exception (fixed message, no body) at the forwarded priority, with the real one
+  kept at a priority the sink won't forward.
 
 ## What source cannot answer
 
