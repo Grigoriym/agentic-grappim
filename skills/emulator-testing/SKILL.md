@@ -436,6 +436,41 @@ toggling is the practical option.)
   and retry rather than trusting a single call. `pm clear`/`force-stop` does not open or
   close the drawer; it's independent launcher state.
 
+## Step 5b. TalkBack — driving and verifying without audio
+
+A headless adb session can't hear TalkBack speak, so "does this announce correctly" needs a
+different proof than listening. Find the service component first — there's no fixed name across
+Android builds — then drive it, and verify via the accessibility tree rather than audio.
+
+- **Finding the component name**: `settings get secure enabled_accessibility_services` returns
+  `null` before anything's ever been enabled, so it can't be read off first. Use
+  `adb shell dumpsys package <talkback-package> | grep -A20 "Service Resolver Table"` and look for
+  the entry under `android.accessibilityservice.AccessibilityService` with categories
+  `FEEDBACK_AUDIBLE`/`FEEDBACK_HAPTIC`/`FEEDBACK_SPOKEN` — that's the real TalkBack service, not
+  the Select-to-Speak or Accessibility-Menu services the same package also registers.
+- **Enabling/disabling**:
+  `adb shell settings put secure enabled_accessibility_services <package>/<service>` then
+  `settings put secure accessibility_enabled 1`. **To turn it back off, `settings put secure
+  enabled_accessibility_services ""` fails with `Bad arguments`** — use `settings delete secure
+  enabled_accessibility_services` instead, then `accessibility_enabled 0`.
+- **A fresh enable can pop a system permission dialog** ("Allow \<Accessibility Suite app\> to send
+  you notifications?") over whatever screen is on top, eating the next tap with no error — same
+  class of hazard as a first-boot tutorial popup. Screenshot right after enabling before trusting
+  a subsequent tap landed in the app.
+- **Touch exploration changes what a plain `input tap` does.** With TalkBack on, a single tap
+  performs an *explore* (sets accessibility focus, would speak it, does not activate). Two taps at
+  the same coordinates roughly 150ms apart perform a real double-tap gesture and activate whatever
+  has accessibility focus — reach for that instead of a single tap on any interactive element while
+  TalkBack is enabled, or the tap silently only focuses instead of clicking/navigating.
+- **`uiautomator dump` is the substitute for listening.** The accessibility node tree it reads is
+  the same tree TalkBack itself consumes, so `content-desc`, `checkable`/`checked`, and node
+  *merging* (one node covering a label + a control, vs. two separate nodes) in the dump are exactly
+  what TalkBack would announce — a reliable proxy when there's no audio output to check against.
+  Concretely: a toggle row built with `Modifier.toggleable(...)` on the row and `onCheckedChange =
+  null` on the inner `Switch` collapses to a single `<node checkable="true" checked="..."
+  clickable="true">` with the label/switch as non-focusable children underneath — confirm exactly
+  that shape rather than trying to infer it from a screenshot.
+
 ## Step 6. Write down what's new
 
 If this session found a gotcha specific to *this* app (a screen's own field ordering, a
