@@ -157,6 +157,10 @@ home for cross-project knowledge — that's what the shared skills are for.
   in this milestone needs it" — and it is the dismissal, not the prediction, that the
   session just falsified. Writing the finding up as new leaves that clause standing and
   understates it: the gap is not unknown, it is documented as harmless.
+  **This includes artifacts *you* wrote earlier in the same session** — tickets, PRs,
+  comments, messages drafted before the correction landed. They read as current to
+  everyone else and are the copy most likely to be acted on, so a session that revised
+  its own conclusion has to go back and fix what it already published.
 - **`CLAUDE.md` and project docs**: add to the section that covers the topic; only
   create a new section when none fits. Match the file's existing voice.
 - **Memory**: one file per fact, plus a one-line pointer in `MEMORY.md`. Update an
