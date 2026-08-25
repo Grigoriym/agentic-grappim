@@ -1,0 +1,19 @@
+skills/finalize/SKILL.md
+  s_e83c4b20e95a50::t_5ede19f7dd4414 160-163
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "2d8f1ad7a1309c141179e8628bd808fce6f8c0da",
+  "prompts": {},
+  "sessions": {
+    "s_e83c4b20e95a50": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7a2e85f6-6755-4738-8b02-01bee1f3ec4f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "g.mikhalchuk <grigoriy.mikhalchuk@deliveryhero.com>"
+    }
+  }
+}
