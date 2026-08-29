@@ -142,9 +142,24 @@ the nullable / `Lazy` / `List` cases change behaviour with no annotation involve
 | `T` | `@InjectedParam` | `params.get()` |
 | `String`/`Int`/… | `@Property("key")` | `scope.getProperty("key")` |
 | `String`/`Int`/… | `@Property("key")` + `@PropertyValue("default")` | `scope.getProperty("key", default)` |
+| `androidx.lifecycle.SavedStateHandle` (KMP) | none | auto-resolved, `@KoinViewModel` only |
 
 A `T?` parameter is the usual explanation for "the bean resolved but the dependency is null" — it
 never raises `NoBeanDefinitionException`.
+
+**`SavedStateHandle` on a `@KoinViewModel` needs no `single {}` and no `@InjectedParam`.**
+`koin-core-viewmodel`'s `AndroidParametersHolder` (used by `koinViewModel()`/`resolveViewModel()`)
+special-cases the `SavedStateHandle` type in its `elementAt`/`getOrNull` overrides and calls
+`extras.createSavedStateHandle()` — a plain constructor param just works. This needs the resolved
+`CreationExtras` to carry a `SavedStateRegistryOwner`, which on Compose Multiplatform + Navigation3
+requires `rememberSaveableStateHolderNavEntryDecorator()` to run **before**
+`rememberViewModelStoreNavEntryDecorator()` in the entry-decorator list (that ordering is what
+`ViewModelStoreNavEntryDecorator`'s own doc comment calls out) — check that ordering first if
+`extras.createSavedStateHandle()` throws "CreationExtras must have a value by
+SAVED_STATE_REGISTRY_OWNER_KEY". Confirmed 2026-08-29 (TaigaMobileNova, `CreateTaskViewModel`
+pilot) via `koin-core-viewmodel` 4.2.2 source and a real Koin-graph + emulator check — the DI
+resolution and Nav3 wiring were both correct; a *separate*, unrelated bug (the Nav3 back stack not
+surviving process death) was what made the feature inert end-to-end, not this injection mechanism.
 
 ### Injecting by qualifier annotation at runtime
 

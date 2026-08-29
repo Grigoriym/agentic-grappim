@@ -159,6 +159,15 @@ doesn't:
   UI value could come from either a stored preference or the system/window default, a
   screenshot where both happen to agree proves nothing about which one the app actually
   reads — set them to disagree first, then a single screenshot has one explanation.
+- **A blank screen behind a splash screen's `keepOnScreenCondition` is not proof the
+  content underneath failed to render** — the splash overlay and the composed content
+  are independent; a screenshot only shows whichever is on top. Confirmed: a screen
+  that looked permanently stuck on splash after a nav-restoration fix was actually
+  rendering the correct restored screen the entire time — `uiautomator dump` found the
+  expected field text in the view tree even though the screenshot showed nothing but
+  the splash. When a screenshot after a change looks blank/stuck, dump the view
+  hierarchy before concluding the change broke rendering; it may only have broken
+  whatever signal was supposed to dismiss the splash.
 - **A list backed by a local cache renders identically whether the last network refresh
   succeeded, failed, or never ran.** A screenshot of populated rows is not evidence a
   request happened; read the network debug log for that (below), or force a state where
