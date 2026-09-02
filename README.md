@@ -137,5 +137,6 @@ MASTG test mapping is read live from the OWASP repo rather than copied.
 | TaigaMobileNova | `../TaigaMobileNova/` |
 | HateItOrRateIt | `../HateItOrRateIt/` |
 | WallosMobile | `../wallosmobile/` |
+| Wayprint | `../wayprint/` |
 
 Listed for reference only — no wiring lives in these projects.
