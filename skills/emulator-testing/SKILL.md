@@ -92,12 +92,55 @@ few taps in a row used *already-scaled* coordinates pulled from a `uiautomator d
 the two coordinate spaces look identical in a tool call and nothing errors when they're
 mixed, a tap just lands on whatever was underneath.
 
+**"Lands on whatever was underneath" is not a hypothetical when the tap is a delete
+confirmation.** A scaling slip that mis-taps a normal button just needs a retry; the same
+slip on a `Delete`/`Yes` dialog silently confirms deletion of whatever row the mis-scaled
+coordinate actually landed on, with no error to catch it — the dialog's own screenshot
+looks identical either way. Confirmed: a `Delete page` confirm tap computed from a stale,
+unscaled coordinate deleted an unrelated row instead of the intended one. Before
+confirming any destructive dialog, re-derive the tap coordinate fresh (re-screenshot or
+re-dump right before it, don't reuse one from earlier in the sequence) and read the
+dialog/toast that names *which* item, not just that a confirm dialog is showing.
+
 `adb shell uiautomator dump /sdcard/window_dump.xml && adb pull /sdcard/window_dump.xml`
 sidesteps the arithmetic entirely: its `bounds="[x1,y1][x2,y2]"` values are already in
 real device pixels, so a center computed from them needs no scaling. Reach for the dump
 over eyeballing the screenshot whenever a tap is going into a dialog, a dropdown menu, or
 any screen where several fields sit close together — the cost of one dump is lower than
 the cost of a mis-tap that fails silently.
+
+**`adb shell input swipe x1 y1 x2 y2 duration` does not land a Compose
+`detectDragGestures`-based drag's `onDragStart` at `(x1,y1)` — touch-slop consumption
+shifts it, and the shift is neither the raw down point nor a fixed offset.** Compose's
+drag detector only fires `onDragStart` once the pointer has moved past
+`viewConfiguration.touchSlop` from the down point, so the position it reports is
+`(x1,y1)` plus however far along the swipe path slop consumed — and with `input swipe`'s
+coarse, fixed-step interpolation (not a real finger's continuous motion), that "how far"
+varies with the swipe's direction and total distance, not just a constant like touch
+slop's dp value would suggest. Confirmed: two swipes of the same duration from
+different-but-nearby down points, using the same direction/magnitude, produced
+`onDragStart` positions offset from the down point by inconsistent amounts (translating
+the whole swipe by a fixed vector did *not* translate the landing point by the same
+vector); switching the swipe to a different direction from a similarly-corrected down
+point produced an even larger, differently-signed offset. When the drag target is small
+(e.g. a label's placement-estimate bounding box, a handle), don't try to compute the
+correct down point analytically from one prior sample — add a temporary log of the
+`onDragStart` position (or whatever coordinate the gesture handler receives) at the
+call site, rebuild, and iterate empirically: adjust the down point by the observed miss
+distance, re-swipe, re-read the log, repeat. A miss costs nothing (state doesn't change),
+so a few log-guided iterations is cheaper than deriving the transform in advance.
+
+**This isn't only a dense-screen problem — a lone, obvious-looking target gets mis-tapped
+just as often.** One project missed the same way three separate times in one session: an
+action-bar overflow icon (landed on "Delete" instead), a single bottom-overlay button
+(missed by ~500px scaling a displayed-image position instead of using real pixels), and
+one row in an otherwise sparse file list (picked the wrong file, mixing screenshot-display
+and device-pixel coordinate spaces). None of these were dialogs or crowded layouts — the
+target just looked unambiguous enough in the screenshot to seem safe to eyeball. Treat
+"there's only one plausible thing to tap here" as no safer than a dense screen: dump first,
+tap from the dump's bounds, every time a tap needs to land on a specific element rather
+than just closing/dismissing something. Reserve eyeballing a screenshot for confirming what
+rendered, never for computing where to tap next.
 
 Three dump-specific gotchas worth knowing before trusting a grep against it:
 
@@ -429,7 +472,13 @@ toggling is the practical option.)
   flattens its arguments into one string that the *device's* shell re-parses, so inner
   single quotes get stripped and a `$VAR` expands device-side — use outer double quotes,
   no shell variables, and an absolute path (`run-as` does not leave you in the app's own
-  data directory).
+  data directory). **To plant a whole file (e.g. a synthesized legacy-format JSON fixture)
+  rather than a single encoded value**, don't `adb push` it to `/sdcard` and then `run-as
+  ... cp` it in — scoped storage blocks the app-UID process from reading an adb-pushed
+  sdcard file even under `run-as`, failing with `cp: bad '/sdcard/...': Permission denied`.
+  Pipe the local file through `adb shell`'s stdin instead, straight into the target path:
+  `cat local.json | adb shell "run-as <pkg> sh -c 'cat > files/.../metadata.json'"` — no
+  intermediate sdcard hop needed.
 - **Picking a gallery image for an upload flow needs the file media-scanned first**, and
   a single-select system picker may still show a multi-select-style confirmation bar.
   `adb push`ing a file into `/sdcard/Pictures/` does not make it appear in a
@@ -438,6 +487,15 @@ toggling is the practical option.)
   file:///sdcard/Pictures/x.jpg` is what registers it with MediaStore. And depending on
   the picker's version, tapping a thumbnail may only *select* it — tapping an explicit
   **Done**/confirm control is what actually returns the `Uri` to the app.
+- **Shortcutting a share/view-intent test with `am start -a android.intent.action.VIEW -d
+  file:///...` commonly fails with `open failed: EACCES (Permission denied)`**, even when the
+  URI points into the *target app's own* external files dir
+  (`/sdcard/Android/data/<pkg>/files/`, world-readable, pushed there directly) — scoped storage
+  blocks a `file://` URI delivered this way regardless of whose directory it names. Don't debug
+  permissions or chase `MANAGE_EXTERNAL_STORAGE`; push the file to `/sdcard/Download/` instead,
+  media-scan it (`MEDIA_SCANNER_SCAN_FILE`, as above), and drive the real system picker/share
+  sheet to hand the app a proper `content://` grant. That route is also the more faithful test
+  of the app's actual import/share-handling code path than a raw `file://` `Uri` would be.
 - **A launcher icon lives in the app drawer, not necessarily the home screen** on
   launchers that only pin favorites to home — `adb shell input swipe 540 1800 540 600`
   (adjust to the device's resolution) pulls the drawer up. That swipe can silently no-op
