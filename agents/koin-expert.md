@@ -218,7 +218,7 @@ When a Koin exception occurs, follow this checklist:
 naming every one at once. Runs in CI via `./gradlew jvmTest`. Full rationale:
 `docs/koin/koin-graph-test.md`.
 
-Three things to know before trusting a green run:
+Four things to know before trusting a green run:
 
 - It does **not** use koin-test's `checkModules()` — that throws on the first failure of any kind,
   and ~14 ViewModels legitimately throw `MissingFieldException` from `savedStateHandle.toRoute<T>()`
@@ -230,6 +230,20 @@ Three things to know before trusting a green run:
   (verified: deleting `UsersDataModule::class` left the count at 147). The includes list is
   load-bearing only on iOS Native — so a new module added to `AppModule.includes` still has to be
   confirmed by running the iOS app.
+- **For a `@Single fun provideX(a: A): X = X(...)` factory, `verify()` does not check the
+  factory function's own parameters — it reflects on `X`'s real primary constructor and demands
+  *that* be resolvable, no matter what the factory body actually does.** Confirmed in a sibling
+  project (same `KmpDiConventionPlugin` template, same `org.koin.test.verify.verify` call): a
+  factory `provideTracksStorage(context: Context): TracksStorage =
+  TracksStorage(Path(context.filesDir...))` failed with "Missing definition for
+  '[field:'directory' - type:'Path']'" — `directory: Path` is `TracksStorage`'s own constructor
+  parameter name, never mentioned in the factory. This is exactly why every factory-provided
+  singleton in *this* project binds to an **interface** (`AuthStorage`, `TaigaSessionStorage`,
+  ...) rather than a concrete class — an interface has no constructor for `verify()` to reflect
+  on, so the check trivially passes. Keep doing that for any new one; if the provided type must
+  be concrete, split the factory's own work into an intermediate binding (e.g. a separate
+  `@Single fun providePath(context): Path`) so the concrete type's *real* constructor parameter
+  has a genuine definition to find.
 - Nullable (`T?` → `getOrNull()`) and `Lazy<T>` parameters never raise, so they are invisible to it.
 
 **When the graph can't be started at all** — a half-wired module, or a project where `startKoin` doesn't
