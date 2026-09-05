@@ -98,6 +98,13 @@ kinds matter, and the second is the one that gets forgotten.
 - A real problem you saw and deliberately left alone to keep the diff honest. This is
   knowledge too, and it is the kind most often lost — "not fixed" reads as "nothing to
   record", so it dies with the session instead of reaching the routing table.
+- A gap in the project's own tooling (lint/analyze/build scripts, generators, CI
+  checks) that made this session's verification harder than it should have been — a
+  stale hardcoded list, a check that doesn't exist yet, a broken build. Don't just
+  record it: if the fix is small and safe, make it now (Step 4). If it's bigger,
+  spend a few minutes establishing what a real fix would take before you write it up —
+  "the build is broken" is a weaker finding than "the build is broken because X, and
+  fixing it means Y."
 
 Write the raw list first. Filtering comes next — do not filter while harvesting.
 
@@ -163,6 +170,11 @@ home for cross-project knowledge — that's what the shared skills are for.
   its own conclusion has to go back and fix what it already published.
 - **`CLAUDE.md` and project docs**: add to the section that covers the topic; only
   create a new section when none fits. Match the file's existing voice.
+- **Tooling fixes**: a working command beats a documented workaround for a broken one.
+  Fix a small, well-understood tool gap in this pass rather than only noting it exists.
+  For something too large to fix now, the investigation itself is the deliverable —
+  write what's broken, why, and what a real fix would take to the project's
+  backlog/deferred doc, not just a one-line complaint.
 - **Memory**: one file per fact, plus a one-line pointer in `MEMORY.md`. Update an
   existing memory rather than adding a second one on the same subject.
 - **Shared skill**: edit the `SKILL.md` under `~/.claude/skills/<name>/` (which is the
