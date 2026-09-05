@@ -32,6 +32,15 @@ this project's package id, AVD name, screens or app-specific quirks — that liv
 `docs/EMULATOR_TESTING.md` in the current repo, which this skill reads first and keeps
 up to date.
 
+**Hard rule, before the first tap of any session: never compute a tap coordinate by
+eyeballing a screenshot's pixel position.** Get real bounds from `uiautomator dump`
+(Step 2) first, every time, including what looks like an obvious single target on an
+uncluttered screen. This has been the single most repeated mistake this skill exists to
+prevent — three separate confirmed occurrences (missed taps, wasted round-trips) came
+from skipping straight to a screenshot-estimated coordinate instead of dumping first,
+despite Step 2 below already spelling out why. Read that as evidence the warning needs
+to be obeyed at the top, not just documented further down.
+
 ## Step 0. Read the project doc
 
 Look for `docs/EMULATOR_TESTING.md` (check the project's `CLAUDE.md` for a different
@@ -496,6 +505,33 @@ toggling is the practical option.)
   media-scan it (`MEDIA_SCANNER_SCAN_FILE`, as above), and drive the real system picker/share
   sheet to hand the app a proper `content://` grant. That route is also the more faithful test
   of the app's actual import/share-handling code path than a raw `file://` `Uri` would be.
+  **Synthesizing the `content://` `Uri` itself instead (`am start -a VIEW -d
+  content://com.android.externalstorage.documents/document/...`) fails too, even with
+  `--grant-read-uri-permission`** — `SecurityException: UID 2000 does not have permission to
+  content://...; you could obtain access using ACTION_OPEN_DOCUMENT or related APIs`. `adb shell
+  am` runs as the `shell` UID, which never held a grant on that document to forward one. The real
+  external-app handoff this is meant to simulate: launch a real file browser
+  (`com.google.android.documentsui`'s standalone Files app, not the in-app SAF picker —
+  `am start -n com.google.android.documentsui/com.android.documentsui.LauncherActivity`), tap a
+  `.gpx` file, and Android's own "Open with" chooser lists the target app if its manifest
+  registers a matching `<data android:mimeType=.../>` intent filter for `VIEW`/`SEND` — tap the
+  app, then **Just once**, and it receives a real granted `Uri` exactly like a genuine external
+  share would deliver.
+- **Verifying an outgoing `FileProvider` share (own app hands out a `content://` URI via
+  `ACTION_SEND`): a `SecurityException`/`FileUriExposedException` from `com.android.intentresolver`
+  (or another system chooser package) in logcat right after the sheet opens is not proof the
+  grant is broken.** The system chooser's own content-preview thumbnail loader
+  (`ImageLoader`/similar, package `com.android.intentresolver`) tries to read the URI to render a
+  preview *before* the user has picked a target, and that read is routinely denied — the grant is
+  scoped to whichever app the user picks, not to the chooser UI process itself. Confirmed:
+  `Permission Denial: opening provider ... from ProcessRecord{... com.android.intentresolver ...}
+  that is not exported from UID <app>` appeared in logcat the moment a "Sharing image" chooser
+  sheet opened (no thumbnail rendered, just a text-only header — the visible symptom), while the
+  actual share to a real picked target (e.g. Messages) opened cleanly with zero exceptions once
+  that target actually received the intent. Grep logcat for the exception with the *target app's*
+  process name (or absence of any exception after tapping a specific chooser entry), not just
+  "any SecurityException mentioning my provider" — a hit from the chooser package alone is cosmetic
+  and doesn't mean the actual grant is broken.
 - **A launcher icon lives in the app drawer, not necessarily the home screen** on
   launchers that only pin favorites to home — `adb shell input swipe 540 1800 540 600`
   (adjust to the device's resolution) pulls the drawer up. That swipe can silently no-op
