@@ -1,0 +1,6 @@
+{
+  "name": "ollama-relay",
+  "description": "Routes bulk file-reading and summarization to a local Ollama model (default qwen2.5-coder:14b) instead of Claude's own context. Ships in shadow mode by default — it only logs what it would block until OLLAMA_RELAY_ENFORCE=1 is set, and always fails open if Ollama is unreachable.",
+  "version": "0.1.0",
+  "author": { "name": "grappim" }
+}

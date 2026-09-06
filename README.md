@@ -129,6 +129,55 @@ The commentary around those quotes is ours. Nothing here is derived from any thi
 skill collection — the control text comes from OWASP's own `OWASP_MASVS.yaml`, and the
 MASTG test mapping is read live from the OWASP repo rather than copied.
 
+## Plugins
+
+Unlike skills (symlinked in), a plugin is installed through Claude Code's own
+plugin/marketplace mechanism, because a plugin can bundle a hook — something a bare
+skill cannot declaratively wire up. This repo doubles as its own local marketplace via
+`.claude-plugin/marketplace.json` at the root, with plugin folders under `plugins/`.
+
+### Install (local, no GitHub push required)
+
+```
+/plugin marketplace add ~/proj/grappim/agentic-grappim
+/plugin install ollama-relay@agentic-grappim
+```
+
+A `git pull` here updates the marketplace entry; re-run `/plugin install` to pick up
+changes on a given machine.
+
+### How to test a new plugin safely, before trusting it
+
+`ollama-relay` ships in **shadow mode** — its hook never blocks anything until you
+explicitly set `OLLAMA_RELAY_ENFORCE=1` in your shell before starting `claude`. Before
+flipping that switch:
+
+1. Install it, then use Claude normally for a while with `OLLAMA_RELAY_ENFORCE` unset.
+2. Review the plugin's `hook.log` (under its `CLAUDE_PLUGIN_DATA` directory) to see
+   what it *would* have blocked, and whether the line-count threshold
+   (`OLLAMA_RELAY_MIN_LINES`, default 350) feels right for your files.
+3. Run `plugins/ollama-relay/bin/bench.sh` directly from a terminal against a couple of
+   real files to compare your locally pulled models before picking a default via
+   `OLLAMA_RELAY_MODEL`.
+4. Only then set `OLLAMA_RELAY_ENFORCE=1` and watch a few real denials get redirected
+   to `/ollama-relay:bulk-read` before relying on it unattended.
+
+### `plugins/`
+
+| Plugin | Description |
+|--------|-------------|
+| `ollama-relay` | Delegates bulk multi-file reads to a local Ollama model over HTTP — shadow-mode by default, fails open if Ollama is unreachable, and refuses (rather than silently truncating) any request that would exceed its tested-safe `num_ctx` ceiling |
+
+### Adding a plugin
+
+1. Create `plugins/<name>/.claude-plugin/plugin.json` with `name` and `description`.
+   Add `hooks/`, `bin/`, `skills/` at the plugin's root, never inside `.claude-plugin/`.
+2. Add an entry to `.claude-plugin/marketplace.json`'s `plugins` array.
+3. Install locally with `/plugin marketplace add <path-to-this-repo>` then
+   `/plugin install <name>@agentic-grappim` and verify behavior before enabling
+   anything destructive/blocking by default — see "How to test a new plugin safely."
+4. Add a row to the table above, and commit.
+
 ## Projects using these skills
 
 | Project | Path |

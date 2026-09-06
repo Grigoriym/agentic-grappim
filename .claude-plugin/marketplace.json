@@ -1,0 +1,17 @@
+{
+  "name": "agentic-grappim",
+  "description": "Shared Claude Code skills, agents, and plugins for grappim projects.",
+  "owner": {
+    "name": "grappim"
+  },
+  "metadata": {
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "ollama-relay",
+      "source": "ollama-relay",
+      "description": "Delegates bulk multi-file reads and summarization to a local Ollama model, keeping raw file contents out of Claude's own context."
+    }
+  ]
+}
