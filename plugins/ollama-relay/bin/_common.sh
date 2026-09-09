@@ -5,6 +5,11 @@
 # Every function that can fail resolves to "allow" on failure.
 
 _orelay_data_dir() {
+  # CLAUDE_PLUGIN_DATA is only set when Claude Code itself invokes this as a hook.
+  # A manual/CLI run of check-file-size.sh, check-bash-read.sh or bulk-read.sh (for
+  # testing) won't have it set, so its log entries land in the TMPDIR fallback
+  # instead of the real plugin data dir — look there first if a manual test's log
+  # entry seems to be missing.
   local dir="${CLAUDE_PLUGIN_DATA:-${TMPDIR:-/tmp}/ollama-relay-data}"
   mkdir -p "$dir" 2>/dev/null
   printf '%s' "$dir"
