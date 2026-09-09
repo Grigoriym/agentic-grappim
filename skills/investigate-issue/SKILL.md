@@ -39,8 +39,11 @@ gh api repos/<owner>/<repo>/issues/<n> --jq '{number,title,state,user:.user.logi
 gh api repos/<owner>/<repo>/issues/<n>/comments --jq '.[] | {user:.user.login,created_at,body}'
 ```
 
-Use `gh api`, not `gh issue view` — the latter fails on repos with Projects-classic
-enabled (`GraphQL: Projects (classic) is being deprecated ... repository.issue.projectCards`).
+Use `gh api`, not `gh issue view`/`gh pr view`/`gh pr edit` — these fail on repos with
+Projects-classic enabled (`GraphQL: Projects (classic) is being deprecated ...
+repository.issue.projectCards` / `repository.pullRequest.projectCards`). For an edit,
+`gh api repos/<owner>/<repo>/pulls/<n> -X PATCH -f body=...` works where `gh pr edit
+--body-file` doesn't.
 
 Then split the report into three separate things, and keep them separate:
 
