@@ -152,6 +152,59 @@ navigate up into. The logged-out-queueing behavior (2) is the part most likely t
 on a first attempt — a naive implementation either drops the link or crashes navigating before the
 graph is ready.
 
+### A singleton top-level nav key defeats real Nav3's per-entry ViewModelStore disposal — "reset to X" doesn't actually reset X's ViewModel
+
+Confirmed TaigaMobileNova, 2026-09-09, investigating "Dashboard still shows the old
+account's data until a manual refresh" after logout → login as a different account,
+inside one continuous process (a fresh process always looked fine, which is what made
+this easy to miss — see the caution below).
+
+Real `androidx.navigation3` (`navigation3-runtime` + `lifecycle-viewmodel-navigation3`)
+only disposes a `NavEntry`'s `ViewModelStore` when `NavEntryDecorator.onPop` fires for
+that entry's `contentKey`, and `onPop` only fires when the entry's key structurally
+*disappears* from the backstack list the decorator is tracking (traced directly in the
+`navigation3-runtime:1.1.1`/`lifecycle-viewmodel-navigation3:2.11.0` sources —
+`DecoratedNavEntries.kt`'s `PrepareBackStack`/`decorateEntry` diff `entries.toList()` via
+`remember`/`DisposableEffect` keys, both of which compare by `equals()`). If a
+top-level/tab-root nav key is a payload-less singleton (`data object` in Kotlin — exactly
+one instance ever exists), then any "reset this section to its root" operation that
+writes that same singleton back into the backstack (`stack[0] = key`, or any equivalent
+"replace the current entry" primitive) is **structurally a no-op**: the list content
+before and after is `equals()`-identical, so `remember`'s cached value never
+recomputes, the disposal-tracking `DisposableEffect` never re-keys, `onPop` never fires,
+and the `ViewModelStore` — and therefore any `koinViewModel()`/`viewModel()` resolved
+against it — silently survives forever. A "logout" or "switch account" flow that relies
+on this kind of reset to also reset per-screen ViewModel state does not actually do so;
+the screen just keeps showing whichever account's data loaded it first, until something
+else (a manual pull-to-refresh) explicitly re-triggers the fetch on that same surviving
+instance.
+
+**This only affects payload-less top-level keys.** A key carrying a real payload (e.g.
+`ProjectSelectorNavDestination(isFromLogin: Boolean)`) generally differs in value across
+navigations, so writing a new-valued instance back *does* register as a structural
+change and disposal works normally — the bug is specific to the "just a marker,
+`data object`" shape that top-level/tab-root destinations very commonly take.
+
+**Fix that doesn't touch the navigation library**: force a full Compose-level teardown
+of the whole nav tree instead of relying on Nav3's per-entry pop detection. Wrap the nav
+host's composition root (everything downstream of wherever the backstack/`Navigator`
+state is created) in `key(sessionGeneration) { ... }`, where `sessionGeneration` is a
+`rememberSaveable`-held counter bumped once per logout. A `key()` value change discards
+the entire previous composition subtree — every `remember`d `ViewModelStoreProvider`
+inside every section's decorator, every `rememberSaveable`/`rememberSerializable`-backed
+backstack — and rebuilds it from scratch, which isn't defeated by singleton-key equality
+the way Nav3's own pop detection is. Use `rememberSaveable`, not plain `remember`, for
+the counter — otherwise a process death mid-session (counter > 0) restores against a
+different composite key than what the backstack was actually saved under, silently
+losing the deeper backstack on relaunch.
+
+**Verification trap to avoid**: force-stopping/killing the app process between two test
+logins gives every top-level screen a genuinely fresh `ViewModelStore` regardless of
+whether this bug is present — a fresh process never had a chance to create the stale
+instance in the first place. A GUI check that does this can pass for the wrong reason
+and hide the bug entirely; the only way to actually exercise it is two logins inside one
+continuous process, with no process restart in between.
+
 ## CI / Android Gradle Plugin
 
 ### AndroidX Macrobenchmark's structured JSON output beats a hand-rolled Perfetto capture for CI regression tracking
