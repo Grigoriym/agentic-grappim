@@ -198,6 +198,31 @@ the counter — otherwise a process death mid-session (counter > 0) restores aga
 different composite key than what the backstack was actually saved under, silently
 losing the deeper backstack on relaunch.
 
+**If you own the navigation layer instead of just consuming it** (confirmed fixed this
+way in `grappim-kit-navigation`, 2026-09-09): scope the `key()` to just the nav-entry
+decoration step, not the whole screen, and bump the counter only from the specific
+operation that's documented to mean "forget everything" (e.g. a `resetTo`/`clearAndReset`
+primitive) — not from every navigation call. This fixes the same disposal problem with a
+much smaller blast radius: ordinary tab switches and back navigation never discard
+anything, only the explicit "start fresh" op does. Before touching the library itself,
+trace which of its functions your bug's actual repro goes through — a report that
+implicates "every function that writes into a backstack slot" can be broader than the
+real bug: in this case a sibling function with the identical "write same singleton into a
+slot" mechanism (a plain tab-switch) turned out to be the library's *intended* behavior
+(switching tabs is supposed to preserve the tab you left), not part of the leak, and
+didn't need touching at all.
+
+**Removing the app-level workaround once a library-level fix ships is not a pure deletion**
+(confirmed TaigaMobileNova, 2026-09-09, swapping onto the `grappim-kit-navigation` fix above):
+`key(sessionGeneration)`'s full-subtree teardown doesn't just free `ViewModelStore`s, it also
+recreates the `Navigator`/backstack state from scratch — which re-seeds it to whatever key it's
+initialized with. If the explicit "navigate to the reset destination" call was deleted when the
+workaround was introduced (on the reasoning that the teardown-and-reseed already lands there),
+deleting only the `key()` wrap and counter leaves nothing to perform that navigation anymore.
+Before removing a `key()`-based teardown workaround, grep for what the pre-workaround code did
+explicitly at that same trigger and confirm it's either still present or gets restored alongside
+the removal — don't assume the wrap's only job was the one bug it was named for.
+
 **Verification trap to avoid**: force-stopping/killing the app process between two test
 logins gives every top-level screen a genuinely fresh `ViewModelStore` regardless of
 whether this bug is present — a fresh process never had a chance to create the stale
