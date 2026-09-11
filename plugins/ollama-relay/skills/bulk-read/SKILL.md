@@ -67,6 +67,16 @@ verified fact you'd stake an edit on.
   a direct read would catch.
 - **Don't chain several `bulk-read` calls hoping to reconstruct understanding of
   complex, unfamiliar code.** That pattern is a sign a direct read is warranted.
+- **A binary file (a screenshot, an image) used to trip the hook** — `wc -l`'s
+  newline-byte count is meaningless for binary data, and a compressed image's byte
+  stream routinely exceeds the text-oriented line threshold by chance, denying the
+  `Read` and pointing here as if it were a huge text file `bulk-read.sh` could
+  summarize (it can't do anything useful with a screenshot). Fixed at the hook level
+  2026-09-11 (`_common.sh`'s `_orelay_is_binary`, using `grep -Iq`): a binary file now
+  short-circuits past the line-count check entirely and is never denied, so this no
+  longer needs a workaround on the `Read` call. First seen 2026-09-10 reading an
+  emulator screenshot mid GUI-verification, misread that session as a possible prompt
+  injection before the cause was traced here the next day.
 
 ## Shadow mode and enforcement
 

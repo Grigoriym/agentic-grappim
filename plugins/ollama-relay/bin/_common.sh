@@ -68,6 +68,17 @@ _orelay_line_count() {
   wc -l < "$path" 2>/dev/null || printf '%s' "-1"
 }
 
+# _orelay_is_binary path — true if the file looks binary (or is empty/unreadable).
+# `grep -I` treats binary content as "no match" regardless of the pattern, so a
+# pattern that matches any non-empty text line (`.`) only succeeds on real text.
+# `wc -l`'s newline-byte count is meaningless for binary data (a compressed image's
+# byte stream routinely exceeds a text-oriented line threshold by chance), so this
+# must run before the line-count check, not after.
+_orelay_is_binary() {
+  local path="$1"
+  ! grep -Iq . "$path" 2>/dev/null
+}
+
 # _orelay_decide_and_act tool path
 # Single entry point both hook scripts call once they've already ruled out
 # targeted-read / ambiguous-parse cases. Always exits 0. Only emits stdout
@@ -77,6 +88,17 @@ _orelay_decide_and_act() {
   local tool="$1" path="$2"
   local lines threshold mode
   threshold="$(_orelay_threshold)"
+
+  if [ ! -f "$path" ] || [ ! -r "$path" ]; then
+    _orelay_log "$tool" "$path" "null" "$threshold" "n/a" "allow" "unreadable, cannot evaluate"
+    exit 0
+  fi
+
+  if [ -s "$path" ] && _orelay_is_binary "$path"; then
+    _orelay_log "$tool" "$path" "null" "$threshold" "n/a" "allow" "binary file, line-count check not meaningful"
+    exit 0
+  fi
+
   lines="$(_orelay_line_count "$path")"
 
   if [ "$lines" = "-1" ]; then

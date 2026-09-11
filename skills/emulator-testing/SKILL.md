@@ -77,6 +77,22 @@ adb exec-out screencap -p > shot.png   # then read shot.png; tap with `adb shell
 adb emu kill                           # don't leave it running
 ```
 
+**Reading a raw screenshot with the Read tool used to be able to fail with "over the
+N-line ollama-relay threshold"** — a local-plugin `PreToolUse` hook (the `ollama-relay`
+plugin) ran `wc -l` on every file including binaries, and a `screencap` PNG's raw byte
+noise routinely exceeded the text-oriented line threshold by chance. Fixed at the hook
+level 2026-09-11 (`plugins/ollama-relay/bin/_common.sh`'s `_orelay_is_binary`, which now
+short-circuits any binary file past the line-count check before it can misfire) — a raw
+screenshot Read is no longer denied for this reason. If this error reappears, the fix
+didn't reach the environment in play; re-encoding the image at a lower quality/cropping
+it (as before) still works as a last-resort bypass, but shouldn't be needed routinely
+anymore. Downsizing before reading can still be worth doing purely to cut image-token
+cost, independent of the (now-fixed) gate — **if you do resize, any tap coordinate read
+off the resized image must be scaled back up by that same factor** before `adb shell
+input tap`, easy to forget once a few taps in a row used real, unscaled `uiautomator
+dump` bounds, exactly the mixed-coordinate-space trap Step 2 below already warns about,
+just with a new source for the wrong-scale number.
+
 `am start -n` needs the **fully-qualified** activity name (no leading dot) the moment
 the package id carries a build-flavor suffix — the class itself isn't renamed, only the
 package. If the app ships multiple flavors/variants with different application ids,
@@ -185,6 +201,16 @@ value and sends debugging in the wrong direction. Compare the field's visible co
 known-good attempt before believing a validation error is about the *value* rather than
 the *input method*.
 
+**`input text` can silently drop everything from a space onward when the very next
+character is `@`.** `adb shell input text "Hey @admin"` landed only `"Hey"` in the
+field — not a timing truncation (the sleep-1 issue above), a specific space-then-`@`
+sequence the `input` tool's own text-to-keyevent translation seems to choke on.
+Substituting `%s` for that one space (`input text` already treats `%s` as a literal
+space) — `adb shell input text "Hey%s@admin"` — landed the full string correctly.
+Compare the field's actual content against what was sent before assuming a short
+result means the app itself rejected part of the input; try the `%s` substitution
+first for any string containing `<space>@`.
+
 **Clearing a field to retry: `input keycombination 113 29` (Ctrl+A) does not reliably
 select-all in a Compose `OutlinedTextField`/`BasicTextField`** — confirmed on a
 Compose Multiplatform app, where it deleted only a few trailing characters instead of
@@ -195,6 +221,17 @@ but actually clears the field regardless of what framework renders it. On the la
 field, `input keyevent KEYCODE_ENTER` often submits the form if it wires
 `ImeAction.Done` to the submit action — cheaper than hunting for a submit button's
 coordinates under an open keyboard, worth trying before assuming it doesn't apply.
+
+**On a multi-line wrapped field, `KEYCODE_MOVE_END` moves to the end of the current
+*visual* line, not the end of the whole field.** A tap that lands mid-paragraph (easy
+to do without re-measuring after the text reflows) plus `MOVE_END` then types/deletes
+at that line's end, not the field's true end — text typed there lands spliced into the
+middle of the content instead of appended, and a delete run clears the wrong span. This
+is a different mechanism from the space-then-`@` drop above (both can make typed text
+land somewhere unexpected, but this one is a cursor-position bug, not a dropped
+character). Tap as close as possible to the actual last visible character of the field
+before trusting `MOVE_END` to reach the true end, or verify the cursor landed where
+expected via a screenshot before typing/deleting.
 
 **A fresh emulator boot can pop a first-run tutorial** (a stylus tutorial on some Pixel
 AVDs, a setup wizard screen) **over the first field tapped**, and it eats every tap
