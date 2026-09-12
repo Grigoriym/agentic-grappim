@@ -1,6 +1,6 @@
 ---
 name: mobile-patterns
-description: A growing reference of confirmed, project-agnostic Kotlin/KMP mobile architecture facts and platform behaviors — not a procedure to run, a knowledge base to check before answering a coroutines/ViewModel/lifecycle/navigation/module-boundary/CI question in any Android or Kotlin Multiplatform project, and to add to whenever an investigation in one project confirms something that generalizes. Check it when reasoning about coroutine exception handling, ViewModel state restoration, deep-link/back-stack design, feature-module coupling, or similar cross-cutting mobile-architecture questions.
+description: A growing reference of confirmed, project-agnostic Kotlin/KMP mobile architecture facts and platform behaviors — not a procedure to run, a knowledge base to check before answering a coroutines/ViewModel/lifecycle/navigation/module-boundary/CI/testing question in any Android or Kotlin Multiplatform project, and to add to whenever an investigation in one project confirms something that generalizes. Check it when reasoning about coroutine exception handling, ViewModel state restoration, deep-link/back-stack design, feature-module coupling, testing a JSSE/TLS trust layer, or similar cross-cutting mobile-architecture questions.
 disable-model-invocation: true
 ---
 
@@ -230,6 +230,25 @@ instance in the first place. A GUI check that does this can pass for the wrong r
 and hide the bug entirely; the only way to actually exercise it is two logins inside one
 continuous process, with no process restart in between.
 
+## Compose Multiplatform
+
+### A scope-builder's `item()`-style registration call is often not itself `@Composable` — only its lambda parameters are
+
+Confirmed grappim-kit, 2026-09-12, porting a `NavigationSuiteScaffold`-based widget (Material3
+adaptive navigation suite) between two apps. Hoisting a `@Composable` call (e.g. a string
+resolution helper) into a plain `val` inside a `forEach { destination -> ... }` loop, then reading
+that `val` from inside `NavigationSuiteScope.item(icon = { ... }, label = { ... })`'s call-site
+argument list, failed one target (`compileKotlinIosArm64`, Kotlin/Native) with "`@Composable`
+invocations can only happen from the context of a `@Composable` function" — even though the
+surrounding `navigationSuiteItems = { ... }` lambda is itself typed `@Composable`. The cause:
+`NavigationSuiteScope.item(...)` (like `LazyListScope.item {}`, `LazyListScope.items {}`, and
+similar scope-builder DSLs) is a plain function, not `@Composable` — only its `icon`/`label`/
+`content`-shaped lambda *parameters* carry the `@Composable` annotation. A composable call has to
+happen inside one of those lambda parameters, not in a statement that merely precedes the call to
+the registration function, even when that statement sits lexically inside a composable-typed outer
+lambda. Fix: call the `@Composable` helper separately inside each lambda parameter that needs its
+result, rather than sharing one hoisted value across them.
+
 ## CI / Android Gradle Plugin
 
 ### AndroidX Macrobenchmark's structured JSON output beats a hand-rolled Perfetto capture for CI regression tracking
@@ -258,3 +277,23 @@ TaigaMobileNova's own `ImmutableList` convention (the motivating example) had ze
 ~50 state classes — a real static-analysis rule for a convention already fully held by every author
 by hand isn't worth its setup cost; the pattern is for a convention that's actually getting
 violated, not a hypothetical one.
+
+## Testing
+
+### A real self-signed HTTPS server (no Docker) proves a custom `X509TrustManager` survives an actual JSSE handshake
+
+Confirmed TaigaMobileNova, 2026-09-11, verifying a `grappim-kit-domain` swap that changed what a
+`CompositeTrustManager.checkServerTrusted` throw site throws (a portable commonMain `Exception`
+now, wrapped in `java.security.cert.CertificateException` so JSSE's handshake code still catches
+it — see `grappim-kit/CONSUMING.md`'s `domain` section for the full writeup). A unit test that
+hand-builds the exception chain (`SSLHandshakeException().apply { initCause(...) }`) only proves
+the app's own mapping logic, not that the JDK's TLS internals actually accept the throw — the
+exact thing that changed. A plain JVM test can prove the real path with no Docker/emulator:
+shell out to `keytool -genkeypair` (via `System.getProperty("java.home") + "/bin/keytool"`, not
+relying on `PATH`) into a `File.createTempFile(...)`-named path that's been `.delete()`d first
+(`keytool` refuses to write into a pre-existing *empty* file — "Keystore file exists, but is
+empty" — `createTempFile` always creates one), load it into a `KeyManagerFactory`/`SSLContext`,
+serve it from `com.sun.net.httpserver.HttpsServer` on `127.0.0.1:0`, then drive the app's actual
+HTTP client engine against it. Applicable anywhere a custom `X509TrustManager`/trust-pinning
+layer exists (wallosmobile has the same `CompositeTrustManager` shape) — this is the pattern to
+reach for before trusting a hand-built exception chain proves a JSSE-facing behavior change.
