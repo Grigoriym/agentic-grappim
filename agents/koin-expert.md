@@ -115,6 +115,12 @@ per-session isolation was needed, and it uses a `@Single` holding an internal se
 a Koin scope (see `docs/koin/workitem-edit-scoping.md` for why). If you are tempted to introduce
 `@Scoped`, read that doc first.
 
+**`binds = [X::class, Y::class]` accepts more than one type** — a single implementation class can
+satisfy two unrelated interfaces from one definition, e.g.
+`@Single(binds = [AppInfoProvider::class, DebugLocalHostProvider::class]) class AppInfoProviderImpl : AppInfoProvider, DebugLocalHostProvider`.
+Confirmed working (compiles, resolves on Android/iOS/JVM, no duplicate-definition error) in the
+`grappim-kit-appinfo` swap (PR #422) — first use of multi-type `binds` in this project.
+
 ### Parameter annotations
 
 | Annotation | Purpose |
