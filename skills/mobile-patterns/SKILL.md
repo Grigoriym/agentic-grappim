@@ -278,6 +278,21 @@ TaigaMobileNova's own `ImmutableList` convention (the motivating example) had ze
 by hand isn't worth its setup cost; the pattern is for a convention that's actually getting
 violated, not a hypothetical one.
 
+### A large KMP multi-target build can OOM the Gradle/Kotlin daemon mid-migration — stop and retry with fewer workers, don't debug the code first
+
+Flagged from a Claude Code usage-insights report covering 2026-08-30 to 2026-09-11's
+`grappim-kit` migration sessions (surfaced independently more than once across that
+window; the report didn't pin it to one specific project). A full gate run across
+JVM/Android/iOS/desktop targets in one session spins up multiple Gradle/Kotlin daemons at
+once, and a large multiplatform module swap can exhaust available memory this way — the
+build fails with an OOM from the daemon process itself, not from the code under test, and
+reads misleadingly like a real compile or test failure since the error surfaces attached
+to whichever task happened to be running. `./gradlew --stop` (kill the stuck daemons),
+then retry the same task with `--max-workers=2` (or the project's own documented
+lower-than-default CI worker count, if it has one) resolved it every time this was hit.
+Check for an OOM/`GC overhead limit exceeded` line in the daemon's own output before
+spending time on the module change that happened to be running when it died.
+
 ## Testing
 
 ### A real self-signed HTTPS server (no Docker) proves a custom `X509TrustManager` survives an actual JSSE handshake

@@ -35,7 +35,7 @@ Then, either every project on the machine:
 
 ```bash
 mkdir -p ~/.claude/skills
-for s in bro finalize investigate-issue masvs-review update-gradle-wrapper emulator-testing android-baseline-profile kover-coverage-sweep compose-stability-audit mobile-patterns adversarial-review; do
+for s in bro finalize investigate-issue masvs-review update-gradle-wrapper emulator-testing android-baseline-profile kover-coverage-sweep compose-stability-audit mobile-patterns adversarial-review grappim-kit-swap; do
   ln -s ~/proj/grappim/agentic-grappim/skills/$s ~/.claude/skills/$s
 done
 ```
@@ -45,7 +45,7 @@ or just the projects that want them:
 ```bash
 cd ~/proj/grappim/<project>
 mkdir -p .claude/skills
-for s in bro finalize investigate-issue masvs-review update-gradle-wrapper emulator-testing android-baseline-profile kover-coverage-sweep compose-stability-audit mobile-patterns adversarial-review; do
+for s in bro finalize investigate-issue masvs-review update-gradle-wrapper emulator-testing android-baseline-profile kover-coverage-sweep compose-stability-audit mobile-patterns adversarial-review grappim-kit-swap; do
   ln -s ../../../agentic-grappim/skills/$s .claude/skills/$s
 done
 ```
@@ -71,6 +71,7 @@ agent. Link, don't vendor.
 | `compose-stability-audit` | Wires up and runs the Compose Compiler's own stability reports, and triages unstable classes/composable parameters — including the common multi-module cause where a domain type reads as `Unstable` everywhere simply because its module never applies the Compose compiler plugin |
 | `mobile-patterns` | A growing reference of confirmed, project-agnostic Kotlin/KMP mobile architecture facts and platform behaviors (coroutine exception handling per platform, ViewModel state-restoration patterns, CI tooling, testing a JSSE/TLS trust layer) — not a procedure, a knowledge base to check and add to |
 | `adversarial-review` | Spawns a fresh, context-free subagent to adversarially review the current diff for correctness and simplicity, write up the assumptions/design decisions it infers from the code, and publish both as an Artifact — a second opinion unpolluted by the session that wrote the change |
+| `grappim-kit-swap` | Swaps a consuming app's local module for a published `grappim-kit-<module>` Maven Central artifact — diffs per-platform sources against the source app's current HEAD, updates the version catalog, runs the full gate suite, verifies on an emulator when the module has runtime behavior, then updates `CONSUMING.md` and opens a PR |
 
 ### `agents/`
 
