@@ -569,6 +569,20 @@ toggling is the practical option.)
   process name (or absence of any exception after tapping a specific chooser entry), not just
   "any SecurityException mentioning my provider" — a hit from the chooser package alone is cosmetic
   and doesn't mean the actual grant is broken.
+- **Placing a home-screen widget.** `dumpsys appwidget | grep -i <app>` first confirms the
+  provider registered. Then long-press empty home screen → "Widgets" → the app's entry. On the
+  API 36 Pixel launcher, tap its preview, then the "Add <app> widget" button (`content-desc`).
+  Older launchers (Samsung One UI, API 29) have no such button and a tap does nothing: drag it
+  with `adb shell input draganddrop <cell center> <empty home cell> 2500`. Take both points from
+  a dump. `dumpsys appwidget`'s `Widgets:` section lists the placed instance.
+  On API < 31 each Glance render logs `Cannot set the rounded corner of views before Api 31`;
+  counting those lines counts renders.
+- **Forcing a WorkManager job**: `dumpsys jobscheduler` lists it by `#<WorkerClass>#` tag, in the
+  `androidx.work.systemjobscheduler` namespace, so `cmd jobscheduler run -f` needs
+  `-n androidx.work.systemjobscheduler <pkg> <id>` or it says "Could not find job". A forced
+  *periodic* job still does not run early: WorkManager logs "executed before schedule" and
+  re-enqueues it, and the first run comes a full period after enqueue. Don't wait it out; a
+  one-time request of the same worker is the on-demand check.
 - **A launcher icon lives in the app drawer, not necessarily the home screen** on
   launchers that only pin favorites to home — `adb shell input swipe 540 1800 540 600`
   (adjust to the device's resolution) pulls the drawer up. That swipe can silently no-op
