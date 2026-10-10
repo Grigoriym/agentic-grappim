@@ -53,9 +53,10 @@ Check each row:
 - **Engagement ~2 × thread is plenty** (4 mm for a 2 mm screw). Longer only adds torque.
 - **Pilot depth ≥ reach + 1–2 mm.** A tip that bottoms out in solid plastic spikes the
   torque. Compute the reach: screw length − (head seat to the joint).
-- **Edge distance ≥ 1 × the hole's diameter of plastic** between the hole (as it will be
-  drilled, if it may be) and the part's outline, including counterbores, in **every**
-  part the screw passes. A plate fitted inside walls loses the wall thickness here.
+- **Plastic from the hole to the part's outline ≥ max(2 mm, 0.6 × the hole's
+  diameter)**, measured from the hole as it will be drilled if it may be; **≥ 1.2 mm
+  round a counterbore**. In **every** part the screw passes: a plate fitted inside walls
+  loses the wall thickness here (v1: a 4 mm hole 0.2 mm from the edge).
 
 ## Step 2. Every guessed value
 
