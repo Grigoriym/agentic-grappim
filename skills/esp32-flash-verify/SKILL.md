@@ -90,6 +90,12 @@ byte cap, then grep. **Don't** run an open-ended pyserial read loop: that once p
 megabytes of garbled, duplicated output that looked exactly like a crash loop while the
 board was fine.
 
+- A bounded loop isn't immune: on a CP2102 DevKit running BLE firmware, reset captures
+  came back as repeated stale chunks and half boot lines while the board was fine (no
+  kernel USB errors, port not held by anything). Don't diagnose the board from such a
+  log; check the effect another way (the PC end of a BLE link, the screen).
+- Opening the port resets an auto-reset board even with DTR/RTS set false before
+  `open()`: every capture is a reboot, which also drops its BLE/WiFi connection.
 - Always include `overflow|Guru|Backtrace|rst:|BROWNOUT` in the regex, or a panic or a
   power problem gets filtered out with the noise.
 - The first read right after a flash or a replug is sometimes empty: retry once.
@@ -107,6 +113,13 @@ app_init: Compile time:     <date time>
 The hash must match `git rev-parse --short HEAD` (with `-dirty` if the tree has
 uncommitted changes), and the compile time must be from this build. Only then does a
 device check say anything about the change.
+
+Both are stamped when **CMake configures**, not on every build: after a change to
+sources only, the log keeps the old hash and time although the new code is running
+(seen: a test screen on the panel, a boot log naming the previous commit). Run
+`idf.py reconfigure` before `build flash` when you'll use them as proof, or check the
+image itself: a string only the new code has, in `build/<app>.bin`
+(`grep -a -c "<string>"`), and `cmp build/<app>.bin build/<app>_flashed.bin`.
 
 ## Step 5. Checks that need the user's hands or eyes
 
