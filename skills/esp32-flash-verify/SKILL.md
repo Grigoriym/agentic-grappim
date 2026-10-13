@@ -90,10 +90,12 @@ byte cap, then grep. **Don't** run an open-ended pyserial read loop: that once p
 megabytes of garbled, duplicated output that looked exactly like a crash loop while the
 board was fine.
 
-- A bounded loop isn't immune: on a CP2102 DevKit running BLE firmware, reset captures
-  came back as repeated stale chunks and half boot lines while the board was fine (no
-  kernel USB errors, port not held by anything). Don't diagnose the board from such a
-  log; check the effect another way (the PC end of a BLE link, the screen).
+- A bounded loop isn't immune: on a CP2102 DevKit, reset captures came back as
+  repeated stale chunks (a screenful of `rst:` lines) and half boot lines while the
+  board was fine (no kernel USB errors, port not held by anything), with BLE and with
+  WiFi firmware alike. The real boot log usually follows the junk, so read past it.
+  Don't diagnose the board from such a log; check the effect another way (the PC end
+  of the link, the screen).
 - Opening the port resets an auto-reset board even with DTR/RTS set false before
   `open()`: every capture is a reboot, which also drops its BLE/WiFi connection.
 - Always include `overflow|Guru|Backtrace|rst:|BROWNOUT` in the regex, or a panic or a
@@ -125,7 +127,9 @@ image itself: a string only the new code has, in `build/<app>.bin`
 
 - **Hands** (turn a knob, press a button, plug something): write the steps in the
   reply *before* starting the capture, run the capture in the background with a long
-  enough window (~40 s), and read the output when it ends.
+  enough window (~40 s), and read the output when it ends. Check that every written
+  step shows up in the capture: a step missing from it (the user stopped early, the
+  capture ended) is unverified, and the report says which ones.
 - **Eyes** (what's on the screen, which way is up, colours): ask. A screen can keep its
   last image across a reset (SSD1306/SSD1315 OLEDs do), and SPI displays have nothing to
   probe. When a capture contradicts what the user sees, believe the user and recheck
