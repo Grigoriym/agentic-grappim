@@ -121,7 +121,8 @@ sources only, the log keeps the old hash and time although the new code is runni
 (seen: a test screen on the panel, a boot log naming the previous commit). Run
 `idf.py reconfigure` before `build flash` when you'll use them as proof, or check the
 image itself: a string only the new code has, in `build/<app>.bin`
-(`grep -a -c "<string>"`), and `cmp build/<app>.bin build/<app>_flashed.bin`.
+(`grep -a -c "<string>"`; a whole literal from the source, not text a `printf` format
+assembles, which isn't in the binary), and `cmp build/<app>.bin build/<app>_flashed.bin`.
 
 ## Step 5. Checks that need the user's hands or eyes
 
