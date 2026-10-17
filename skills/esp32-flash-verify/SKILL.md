@@ -99,6 +99,9 @@ board was fine.
   of the link, the screen).
 - Opening the port resets an auto-reset board even with DTR/RTS set false before
   `open()`: every capture is a reboot, which also drops its BLE/WiFi connection.
+  Console commands written right after `open()` land during boot and are lost
+  silently: wait for a line the firmware prints when it's ready, and check the
+  command's echo is in the output before trusting the result.
 - Always include `overflow|Guru|Backtrace|rst:|BROWNOUT` in the regex, or a panic or a
   power problem gets filtered out with the noise.
 - The first read right after a flash or a replug is sometimes empty: retry once.
