@@ -63,7 +63,8 @@ ls /dev/tty{USB,ACM}* 2>/dev/null
   `Error:`.
 - The flash happened only if the output ends with esptool's `Done` (hard reset). No
   `Done` = the old firmware is still running, whatever the build said.
-- Transient, retry once: `No serial data received`; a port that vanished mid-flash.
+- Transient, retry once: `No serial data received`; `The chip stopped responding`
+  while connecting; a port that vanished mid-flash.
 - `Serial data stream stopped: Possible serial noise` → add `-b 115200`.
 - `Verification failed after fast reflash ... Reflashing the whole image` after
   switching between two projects' firmware on one board: harmless, it recovers and
