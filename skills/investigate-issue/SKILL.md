@@ -202,4 +202,7 @@ three or more, track them with the task list.
   notice get **noted in the doc**, not fixed.
 - When done, set **Status** and add a short "What landed" section — the change, the
   test that covers it, anything deliberately left out.
+- When the user verifies by building the app themselves, everything they will test together
+  must be on the branch that is checked out. Say which branch to build from. Fixes split
+  across branches make a correct fix look broken.
 - Do not close the issue, commit, or push unless the user asks.
