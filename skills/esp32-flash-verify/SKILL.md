@@ -42,6 +42,8 @@ ls /dev/tty{USB,ACM}* 2>/dev/null
   The project's `CLAUDE.md` says which.
 - No port → the board is unplugged (the user unplugs boards to rewire). Ask for it to
   be plugged in; don't build-and-flash into "port is busy or doesn't exist".
+- Boards with different USB chips swapped on one port: `udevadm info -q property -n
+  <port> | grep ID_MODEL` tells them apart in a second (CP2102 vs CH340's `USB_Serial`).
 - More than one board, or any doubt which one this is: read its identity without
   writing anything, and compare the MAC with the board's part sheet:
 
@@ -83,7 +85,9 @@ Use the project's `tools/serial_log.py` if it has one, with the IDF python env:
 
 (`PORT=<port>` in the environment picks another port, where the script supports it.)
 It resets the board via RTS, reads for N seconds with a capped buffer, greps, and
-retries once if nothing arrived.
+retries once if nothing arrived. It prints only at the end, so killing it loses the
+capture unless it catches SIGTERM/SIGINT (esp32-piano's copy does): a capture the
+user may want cut short needs that handler.
 
 No such script? Do the same thing inline (pyserial from the IDF env): open at 115200,
 `dtr=False`, pulse `rts` True→False to reset, read in a loop for a fixed time with a
@@ -122,9 +126,11 @@ device check say anything about the change.
 
 Both are stamped when **CMake configures**, not on every build: after a change to
 sources only, the log keeps the old hash and time although the new code is running
-(seen: a test screen on the panel, a boot log naming the previous commit). Run
-`idf.py reconfigure` before `build flash` when you'll use them as proof, or check the
-image itself: a string only the new code has, in `build/<app>.bin`
+(seen: a test screen on the panel, a boot log naming the previous commit). `idf.py
+reconfigure` doesn't fix it when the version string is unchanged (same HEAD, still
+`-dirty`): `esp_app_desc.c.obj` isn't rebuilt and the compile time stays a day old.
+So check the image itself: the app `.bin` (and the changed file's `.obj`) newer than
+the source edit, or a string only the new code has, in `build/<app>.bin`
 (`grep -a -c "<string>"`; a whole literal from the source, not text a `printf` format
 assembles, which isn't in the binary), and `cmp build/<app>.bin build/<app>_flashed.bin`.
 
