@@ -26,7 +26,7 @@ things get written: the current project, and — when the lesson isn't project-s
 
 ## Step 0. Where you may write
 
-`~/.claude/skills/` and `~/.claude/agents/` are symlinks into the
+`~/.claude/skills/`, `~/.claude/agents/`, and `~/.gemini/skills/` are symlinks into the
 `agentic-grappim` checkout, so **editing a shared skill changes behaviour in every
 project**. That is allowed and is half the point of this skill: the process is
 supposed to get better every session. It is not a thing to ask permission for each
@@ -48,13 +48,13 @@ edit `skills/`, `agents/` and `README.md` freely, and commit as the user asks.
 
 ## Step 0.5. Read the project's own close-out
 
-Before harvesting, check the current project's `CLAUDE.md` for a documented close-out
+Before harvesting, check the current project's `CLAUDE.md` or `GEMINI.md` for a documented close-out
 procedure or docs discipline — a plan document, an ADR directory, a decision log, a
 deviations table. If one exists:
 
-- **Its docs are routing destinations**, alongside `CLAUDE.md` and memory. A
+- **Its docs are routing destinations**, alongside `CLAUDE.md` / `GEMINI.md` and memory. A
   structural decision belongs in the architecture doc; a per-step surprise in the log;
-  only a *convention* in `CLAUDE.md`.
+  only a *convention* in `CLAUDE.md` / `GEMINI.md`.
 - **Read what that procedure already wrote this session.** Finalize often runs after
   the project's own fold, and the fastest way to produce a duplicate is to skip this.
 - **Its standing instructions win** where they conflict with this skill — most often
@@ -133,18 +133,18 @@ outcome; do not manufacture updates.
 
 | What it is | Where it goes |
 |---|---|
-| Convention, gotcha, or constraint specific to this project | project `CLAUDE.md` |
+| Convention, gotcha, or constraint specific to this project | project `CLAUDE.md` / `GEMINI.md` |
 | A fact the project designates a doc for (architecture, decisions, deviations) | that doc (Step 0.5) |
-| Technique, procedure, or working habit that applies across projects | the shared skill in `agentic-grappim` |
+| Technique, procedure, or working habit that applies across projects | the shared skill in `agentic-grappim` or `~/.gemini/GEMINI.md` |
 | User's working style, or a correction with a why | memory (`user` / `feedback`) |
 | Ongoing goal or constraint not derivable from the repo | memory (`project`) |
 | External URL that will be needed again | memory (`reference`) |
 | A real problem seen and deliberately **not** fixed | the project's deferred/backlog doc — create one if absent |
-| Friction logged three times in `docs/frictions.md` | a real fix — a permissions entry, a `CLAUDE.md` line, or a skill — and the promoted lines leave the file |
+| Friction logged three times in `docs/frictions.md` | a real fix — a permissions entry, a `CLAUDE.md` / `GEMINI.md` line, or a skill — and the promoted lines leave the file |
 
-`CLAUDE.md` is the default **for conventions and gotchas**. Where the project
+`CLAUDE.md` / `GEMINI.md` is the default **for conventions and gotchas**. Where the project
 designates a doc for a kind of fact, that doc wins for that kind — an architecture
-decision in `CLAUDE.md` is as misfiled as a build command in an ADR.
+decision in `CLAUDE.md` / `GEMINI.md` is as misfiled as a build command in an ADR.
 
 A shared edit needs generality, not just usefulness: it came up in more than one
 project, or it clearly would. A single occurrence is a project fact.
@@ -168,7 +168,7 @@ home for cross-project knowledge — that's what the shared skills are for.
   comments, messages drafted before the correction landed. They read as current to
   everyone else and are the copy most likely to be acted on, so a session that revised
   its own conclusion has to go back and fix what it already published.
-- **`CLAUDE.md` and project docs**: add to the section that covers the topic; only
+- **`CLAUDE.md` / `GEMINI.md` and project docs**: add to the section that covers the topic; only
   create a new section when none fits. Match the file's existing voice.
 - **Tooling fixes**: a working command beats a documented workaround for a broken one.
   Fix a small, well-understood tool gap in this pass rather than only noting it exists.
