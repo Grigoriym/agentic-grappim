@@ -64,7 +64,12 @@ ls /dev/tty{USB,ACM}* 2>/dev/null
   `grep -iE "error|failed|warning|Done|too small"`. A case-sensitive `error` misses
   `Error:`.
 - The flash happened only if the output ends with esptool's `Done` (hard reset). No
-  `Done` = the old firmware is still running, whatever the build said.
+  `Done` = don't trust what's running, whatever the build said. It may be the old
+  firmware, or the new one: a flash that wrote everything and failed at its verify
+  step still boots with the new hash, so Step 4 passes. `cmp build/<app>.bin
+  build/<app>_flashed.bin` stays different until a flash completes.
+- A flash that dies mid-write leaves the board unbootable (`invalid segment length
+  0xffffffff`, `No bootable app partitions`). Not a dead board: flash again.
 - Transient, retry once: `No serial data received`; `The chip stopped responding`
   while connecting; a port that vanished mid-flash.
 - `Serial data stream stopped: Possible serial noise` → add `-b 115200`.
@@ -101,11 +106,16 @@ board was fine.
   WiFi firmware alike. The real boot log usually follows the junk, so read past it.
   Don't diagnose the board from such a log; check the effect another way (the PC end
   of the link, the screen).
-- Opening the port resets an auto-reset board even with DTR/RTS set false before
-  `open()`: every capture is a reboot, which also drops its BLE/WiFi connection.
-  Console commands written right after `open()` land during boot and are lost
-  silently: wait for a line the firmware prints when it's ready, and check the
+- Opening the port with pyserial resets an auto-reset board even with DTR/RTS set
+  false before `open()`: every capture is a reboot, which also drops its BLE/WiFi
+  connection. A program that must not reset it (a PC daemon on the port): raw
+  `open()`, then clear RTS before DTR with `TIOCMBIC` (DTR first pulls EN low). Two
+  opens that way didn't reset a CP2102 DevKit (no boot banner, uptime ran on).
+  Console commands written right after a resetting `open()` land during boot and are
+  lost silently: wait for a line the firmware prints when it's ready, and check the
   command's echo is in the output before trusting the result.
+- A daemon holding the port makes esptool and captures fail or read garbage: have it
+  take the port with `TIOCEXCL` (esptool then says busy) and stop it around a flash.
 - Always include `overflow|Guru|Backtrace|rst:|BROWNOUT` in the regex, or a panic or a
   power problem gets filtered out with the noise.
 - The first read right after a flash or a replug is sometimes empty: retry once.
