@@ -66,6 +66,10 @@ setup's own test device. Boot the AVD explicitly and pass every subsequent comma
 `-s <avd-serial>` (`emulator-5554` by default) once more than one device might be present,
 rather than relying on adb's single-device default.
 
+**On a device the user is also driving, read which app they're in before any `pm clear`/`pm revoke`:**
+`dumpsys activity activities | grep topResumedActivity`. With several flavors installed, a command
+aimed at the wrong package succeeds silently and you report a reset that never happened.
+
 Headless, no snapshot, no interaction needed beyond `input tap`:
 
 ```bash
@@ -330,6 +334,13 @@ doesn't:
   `WindowInsets.ime`) that was only checked against one modern-API AVD is not yet
   verified for a real user on an older OS — say so rather than calling it confirmed,
   and prefer a real device or a lower-API AVD when one is available.
+
+- **To tell a per-app network block from a network problem, compare UIDs with a control.** Run
+  `adb shell "run-as <pkg> sh -c 'nc -z -w 3 <host> <port>; echo rc=\$?'"` against the same target
+  from plain `adb shell`, plus a public control such as `1.1.1.1 443` under both. App UID timing out
+  where the shell connects, with the public control fine, is a per-app block. Needs a debuggable
+  build and the screen on: if the public control fails too (a dozing phone), the run means nothing.
+  An AVD below the newest API can't reproduce a restriction that OS version introduced.
 
 ## Step 4b. Frame-level timing — when a screenshot can't tell you *how long*
 
