@@ -249,6 +249,14 @@ the registration function, even when that statement sits lexically inside a comp
 lambda. Fix: call the `@Composable` helper separately inside each lambda parameter that needs its
 result, rather than sharing one hoisted value across them.
 
+### A green `jvmTest` doesn't prove `commonMain` compiles everywhere
+
+Confirmed TaigaMobileNova, 2026-11-14. `StringBuilder.replace(start, end, str)` in `commonMain`
+compiled and passed `jvmTest`, because the JVM compilation resolves `java.lang.StringBuilder`'s
+members. `compileKotlinIosArm64` rejected it (the common overload is `replace(Regex, …)`; use
+`setRange`). Any new `commonMain` code that touches stdlib/JDK-looking APIs needs one Native
+compile, e.g. `:module:compileKotlinIosArm64`, before calling it done.
+
 ## CI / Android Gradle Plugin
 
 ### AndroidX Macrobenchmark's structured JSON output beats a hand-rolled Perfetto capture for CI regression tracking

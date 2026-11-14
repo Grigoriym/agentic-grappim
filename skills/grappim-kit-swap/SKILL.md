@@ -115,6 +115,9 @@ a real behavioral divergence (see `navigation` in `CONSUMING.md`). Don't call a 
   with `implementation("io.github.grigoriym:grappim-kit-<module>:$grappimKitVersion")` in
   every consumer, delete the now-unused local module once nothing references it, and fix
   import ordering/paths at every call site ktlint flags.
+  A rename of the existing `import` lines misses files that used the moved type without an
+  import, through same-package resolution; only a build finds them. Seen on `uikit`
+  (`NativeText`) and `customheaders` (`KmpNetworkModule`).
 
 ## Step 4. Run the full gate suite
 
@@ -151,6 +154,21 @@ this skill's job is knowing *what* to verify for a kit swap specifically:
   it safe — `storage`'s `KeystoreSecretCipher` swap once corrupted every already-installed
   user's stored value because "no live installs yet" was assumed rather than checked
   against the app's real store listing/tags.
+  To test the upgrade, build the pre-swap APK from a `git worktree add <dir> origin/<default>`.
+  Copy the gitignored `local.properties` (and any secrets file, e.g. `google-services.json`)
+  into the worktree first, or the build fails with `SDK location not found`. Save the value on
+  that build, then `run-as <pkg> cat` the store to confirm it was actually written. After that,
+  `adb install -r` the swapped APK over it; both debug builds use the same signing key.
+  Without the `run-as` check, a pass looks the same as a value that was never saved.
+- **Parallel swaps share one emulator.** When the watcher briefs several apps at once, another
+  session may be driving the same AVD: check `adb shell dumpsys activity activities | grep
+  topResumedActivity` before each UI sequence, and ask the user to arbitrate rather than tapping
+  through someone else's app (confirmed 2026-11-14: a HateItOrRateIt session took the foreground
+  mid-check during TaigaMobileNova's `customheaders` swap and absorbed a tap).
+- **Verify the app-specific binding, not just the kit class**, when a kit type takes per-app
+  configuration (e.g. `CustomHeaderValidator`'s reserved names): the kit's own tests pass for
+  its default, so only a test against the instance the app actually binds catches an app that
+  forgot to pass its own.
 - Anything navigation-related: exercise the actual back-stack behavior end to end (switch
   sections via the drawer, then press back repeatedly), not just that the screen renders —
   a back-stack-shape bug renders identically to the correct behavior in a single

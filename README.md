@@ -165,6 +165,11 @@ flipping that switch:
 4. Only then set `OLLAMA_RELAY_ENFORCE=1` and watch a few real denials get redirected
    to `/ollama-relay:bulk-read` before relying on it unattended.
 
+To enforce per project rather than per shell, put `"env": {"OLLAMA_RELAY_ENFORCE": "1"}` in
+that project's gitignored `.claude/settings.local.json`, not the committed
+`.claude/settings.json`: the flag only means anything on a machine with the plugin
+installed. As of 2026-11-14 that's the four grappim apps and `grappim-watcher`.
+
 ### `plugins/`
 
 | Plugin | Description |

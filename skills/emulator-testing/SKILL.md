@@ -6,7 +6,8 @@ description: Drive a real Android emulator via adb to verify that a change actua
   testing, and reading a Ktor/network debug log. Reads and maintains a project-local
   `docs/EMULATOR_TESTING.md` holding that project's own package id, AVD name, activity
   name and app-specific gotchas. Use when asked to verify something on the
-  emulator/device, when a checklist or PR's Verify step needs a running app, or when
+  emulator/device, when a checklist or PR's Verify step needs a running app, before
+  running a Gradle instrumented/e2e suite (`connectedAndroidTest` and friends), or when
   the user says "check this on the emulator", "screenshot the app", "test this on
   device".
 metadata:
@@ -41,6 +42,12 @@ from skipping straight to a screenshot-estimated coordinate instead of dumping f
 despite Step 2 below already spelling out why. Read that as evidence the warning needs
 to be obeyed at the top, not just documented further down.
 
+**Scale the check to the step.** For a scaffolding-sized change (a placeholder screen,
+module skeletons, DI wiring a test already proves) the host gates — build, lint, tests —
+are enough; the user called an emulator run there "overkill". Even if a checklist
+Verify line asks for one, suggest skipping it with a `Note:` and save the emulator for
+real screens and flows.
+
 ## Step 0. Read the project doc
 
 Look for `docs/EMULATOR_TESTING.md` (check the project's `CLAUDE.md` for a different
@@ -65,6 +72,12 @@ wrong device answering. Don't try to unlock or guess a PIN on hardware that isn'
 setup's own test device. Boot the AVD explicitly and pass every subsequent command
 `-s <avd-serial>` (`emulator-5554` by default) once more than one device might be present,
 rather than relying on adb's single-device default.
+
+**An emulator can be shared with another agent session.** One already running that you
+didn't start this session may be in use. Ask before you install to it, clear data on it,
+or run a suite on it, since the suite's orchestrator wipes app data. It works the other
+way too: another session can pick up an emulator you booted. Check what's in the
+foreground before each step, and don't `emu kill` it while it's still in use.
 
 **On a device the user is also driving, read which app they're in before any `pm clear`/`pm revoke`:**
 `dumpsys activity activities | grep topResumedActivity`. With several flavors installed, a command
@@ -235,7 +248,12 @@ is a different mechanism from the space-then-`@` drop above (both can make typed
 land somewhere unexpected, but this one is a cursor-position bug, not a dropped
 character). Tap as close as possible to the actual last visible character of the field
 before trusting `MOVE_END` to reach the true end, or verify the cursor landed where
-expected via a screenshot before typing/deleting.
+expected via a screenshot before typing/deleting. **Ctrl+End (`input keycombination 113
+123`) doesn't reach the field's end in a Compose `BasicTextField` either** — confirmed
+it left the cursor where the tap had put it. When the exact starting content doesn't
+matter, the reliable route is clearing the field outright (a run of `KEYCODE_DEL` plus
+a run of `KEYCODE_FORWARD_DEL`, which together clear it from any cursor position) and
+typing the whole intended text from scratch.
 
 **A fresh emulator boot can pop a first-run tutorial** (a stylus tutorial on some Pixel
 AVDs, a setup wizard screen) **over the first field tapped**, and it eats every tap

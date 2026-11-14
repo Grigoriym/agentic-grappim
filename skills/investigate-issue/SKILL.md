@@ -188,6 +188,12 @@ races. Establish a before-state *rate* ("2 of 3 runs failed, each blaming a diff
 test"), then re-run the fixed state the same number of times. State the count in the
 doc, because "it passes now" is exactly what someone said before shipping the flake.
 
+The same goes for clearing a suspect: **time it over several periods of the symptom.**
+Note when the symptom recurs first; a steady period that survives restarting the
+parts points away from them and toward something with that period (a cache TTL, a
+scan, a timer). A 60 s timing once cleared a lookup whose cache expired every 120 s —
+it was the cause.
+
 Order the parts so the failing regression test comes first, then the fix that turns
 it green, then any cleanup.
 
