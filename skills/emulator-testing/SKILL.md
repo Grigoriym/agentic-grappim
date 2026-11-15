@@ -225,7 +225,8 @@ Three dump-specific gotchas worth knowing before trusting a grep against it:
 ## Step 3. Fill a form
 
 **Tap the first field once, then `input keyevent KEYCODE_TAB` between fields** if the
-framework honors TAB for focus (Compose does). Re-tapping by coordinate goes wrong the
+framework honors TAB for focus (Compose does, for single-line fields only: a multi-line
+`TextField` takes the TAB as a tab character and keeps focus). Re-tapping by coordinate goes wrong the
 moment the keyboard opens and shifts the layout, or the moment validation adds/removes
 content between fields — a mis-tap lands on whatever moved into that spot. Re-screenshot
 before trusting stale coordinates on any screen where content can grow (an inline
