@@ -216,7 +216,10 @@ warning, a notice banner) between one field and the next.
 value and sends debugging in the wrong direction. Compare the field's visible content
 (dot count for a password, character count for text) against a screenshot of a
 known-good attempt before believing a validation error is about the *value* rather than
-the *input method*.
+the *input method*. The same pause is needed after a `KEYCODE_TAB` and before the next
+`input text`: without it the value lost its first character. Don't fix that by retyping into
+the field — the keyboard's autocorrect then swapped the retyped word for a different one.
+Clear the app's data and fill the form again, with the pauses.
 
 **`input text` can silently drop everything from a space onward when the very next
 character is `@`.** `adb shell input text "Hey @admin"` landed only `"Hey"` in the
