@@ -166,6 +166,10 @@ the cost of a mis-tap that fails silently.
 node and taps its centre; `ui.py list` prints every labelled node with its bounds. It dumps
 fresh on each call, so a layout that moved (an inline error, an open keyboard) can't leave it
 with a stale coordinate.
+**Its `[n]` index counts a filled Compose `OutlinedTextField`'s label node too**: the label
+stays in the dump as its own node once the field has text. `tap "Label" 0` then hits the
+filled row, not the next empty one, and the typed text lands in the wrong field. Tap an empty
+field by its bounds from a fresh `list` instead.
 
 **`adb shell input swipe x1 y1 x2 y2 duration` does not land a Compose
 `detectDragGestures`-based drag's `onDragStart` at `(x1,y1)` — touch-slop consumption
@@ -327,6 +331,10 @@ doesn't:
   adb shell input keyevent KEYCODE_HOME && adb shell am kill <package-id>
   adb shell am start -n <package-id>/<fully-qualified-activity-name>
   ```
+
+  `am kill` only kills a background process: one second after `KEYCODE_HOME` it can still be
+  foreground and nothing happens. Wait a few seconds and check `adb shell pidof <package-id>`
+  is empty before the relaunch, or the "restore" never ran.
 
   `am kill` keeps the task and any saved-instance-state; `force-stop` discards both. Pick
   the one that matches what's under test — `am kill` for in-memory back stack / UI
@@ -585,7 +593,10 @@ toggling is the practical option.)
   `adb shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d
   file:///sdcard/Pictures/x.jpg` is what registers it with MediaStore. And depending on
   the picker's version, tapping a thumbnail may only *select* it — tapping an explicit
-  **Done**/confirm control is what actually returns the `Uri` to the app.
+  **Done**/confirm control is what actually returns the `Uri` to the app. On an API 36
+  `google_apis` AVD the photo picker's thumbnails have `content-desc` "Photo taken on …" and its
+  confirm is "Done". `ACTION_IMAGE_CAPTURE` there opens `com.android.camera2`: tap
+  `content-desc` "Shutter", then "Done"; the shot is the emulator's virtual scene.
 - **Shortcutting a share/view-intent test with `am start -a android.intent.action.VIEW -d
   file:///...` commonly fails with `open failed: EACCES (Permission denied)`**, even when the
   URI points into the *target app's own* external files dir
