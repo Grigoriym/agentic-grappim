@@ -246,7 +246,11 @@ Four things to know before trusting a green run:
   parameter name, never mentioned in the factory. This is exactly why every factory-provided
   singleton in *this* project binds to an **interface** (`AuthStorage`, `TaigaSessionStorage`,
   ...) rather than a concrete class — an interface has no constructor for `verify()` to reflect
-  on, so the check trivially passes. Keep doing that for any new one; if the provided type must
+  on, so the check trivially passes. **The flip side: it then checks nothing.** The provider's
+  own parameters go unverified, so a missing binding behind an interface provider still passes
+  `verify()` (koillectionmobile M1.3: `CustomHeadersStorage` unbound, `verify()` green). Add a
+  JVM test that runs `startKoin<KoinApp> {}` and `get<>()`s the top-level type, then `stopKoin()`.
+  Keep doing interface binds for any new one; if the provided type must
   be concrete, split the factory's own work into an intermediate binding (e.g. a separate
   `@Single fun providePath(context): Path`) so the concrete type's *real* constructor parameter
   has a genuine definition to find.

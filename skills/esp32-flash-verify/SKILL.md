@@ -45,7 +45,10 @@ ls /dev/tty{USB,ACM}* 2>/dev/null
 - Boards with different USB chips swapped on one port: `udevadm info -q property -n
   <port> | grep ID_MODEL` tells them apart in a second (CP2102 vs CH340's `USB_Serial`).
 - More than one board, or any doubt which one this is: read its identity without
-  writing anything, and compare the MAC with the board's part sheet:
+  writing anything, and compare the MAC with the board's part sheet. Do it after
+  **every** replug, not once per session: a user rewiring between checks can pick up
+  a different board of the same kind without saying so, and a result then lands on
+  the wrong unit.
 
   ```bash
   . ~/esp/esp-idf/export.sh >/dev/null && esptool -p <port> chip-id

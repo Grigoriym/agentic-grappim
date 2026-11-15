@@ -257,6 +257,11 @@ it left the cursor where the tap had put it. When the exact starting content doe
 matter, the reliable route is clearing the field outright (a run of `KEYCODE_DEL` plus
 a run of `KEYCODE_FORWARD_DEL`, which together clear it from any cursor position) and
 typing the whole intended text from scratch.
+**Right after `input text`, cursor keys may not move at all**: Gboard still holds the
+last word as a composition, so `MOVE_END`/`DPAD_RIGHT` to step past text the app
+inserted after the cursor (e.g. a closing `**` from a formatting button) silently no-op
+and the next keystroke lands inside it. Order the input so nothing has to be stepped
+over, or verify the field's text in a dump before typing on.
 
 **A fresh emulator boot can pop a first-run tutorial** (a stylus tutorial on some Pixel
 AVDs, a setup wizard screen) **over the first field tapped**, and it eats every tap
