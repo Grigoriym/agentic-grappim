@@ -161,6 +161,12 @@ over eyeballing the screenshot whenever a tap is going into a dialog, a dropdown
 any screen where several fields sit close together — the cost of one dump is lower than
 the cost of a mis-tap that fails silently.
 
+**Use the bundled `ui.py` rather than parsing a dump by hand**: `python3 -I
+~/.claude/skills/emulator-testing/ui.py tap "<text or content-desc>" [n]` dumps, finds the
+node and taps its centre; `ui.py list` prints every labelled node with its bounds. It dumps
+fresh on each call, so a layout that moved (an inline error, an open keyboard) can't leave it
+with a stale coordinate.
+
 **`adb shell input swipe x1 y1 x2 y2 duration` does not land a Compose
 `detectDragGestures`-based drag's `onDragStart` at `(x1,y1)` — touch-slop consumption
 shifts it, and the shift is neither the raw down point nor a fixed offset.** Compose's

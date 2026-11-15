@@ -186,6 +186,12 @@ dependencies {
 }
 ```
 
+In a KMP module, also add the runtime to `commonTest` as `implementation`. A native test
+compilation (`compileTestKotlinIosArm64`) does not see `commonMain`'s `compileOnly`, and the
+Compose compiler fails with "requires the Compose Runtime to be on the class path". `jvmTest`
+still passes, so only a full `build` shows it, and only once such a module gets `commonTest`
+sources (koillectionmobile M3.3, 2026-11-15).
+
 Apply it to every domain module whose types are used as Composable parameters anywhere
 in the app. Re-run Step 2's audit afterward to confirm the unstable-parameter count
 drops to just the buckets in Step 6.
