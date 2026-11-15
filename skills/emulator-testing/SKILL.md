@@ -56,10 +56,20 @@ anything: it has the concrete package id(s), activity name, AVD name and the app
 previously-discovered gotchas, which turn every recipe below from a template into a
 runnable command.
 
+The AVD name, SDK path and similar facts differ per machine. They go in the project's
+gitignored `docs/machine.local.md` (see the agentic-grappim README, "Machine-local facts").
+The project doc says only what kind of device the app needs.
+
 If it does not exist, create it from the template in Step 5 the first time this skill
 verifies something in this project — fill in the package id, activity name and AVD name
 by reading the app's `build.gradle.kts`/manifest and `~/Android/Sdk` (`emulator
 -list-avds` for the AVD name if it isn't already recorded anywhere).
+
+The doc's AVD name can come from another machine. If `emulator -list-avds` is empty and
+`~/Android/Sdk` has no `system-images/` or `cmdline-tools/`, install cmdline-tools from
+`dl.google.com/android/repository/commandlinetools-linux-<build>_latest.zip` into
+`cmdline-tools/latest`, then `sdkmanager "system-images;android-<api>;google_apis;x86_64"`
+and `avdmanager create avd`. Record the new name in `docs/machine.local.md`, not the project doc.
 
 ## Step 1. Boot and screenshot
 
@@ -685,7 +695,7 @@ technique lives in the skill itself, not here — this file is only what's true 
 
 ## Device facts
 
-- AVD: `<avd-name>`
+- AVD: `<device kind, e.g. any 1080x2400 API 36 phone>`; the name on each machine is in `docs/machine.local.md`
 - Package id(s): `<package-id>` (<flavor>), ...
 - Activity: `<fully-qualified-activity-name>`
 - Backend/local server, if any: `<how to reach it from the emulator, e.g. 10.0.2.2:port>`

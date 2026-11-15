@@ -54,6 +54,16 @@ done
 working while silently serving old content — the same failure mode as a duplicated
 agent. Link, don't vendor.
 
+## Machine-local facts
+
+A project can be worked on from more than one machine. Its committed docs say what it needs:
+which services, ports, credentials of a local test instance, which kind of emulator. Facts
+true on one machine only stay out of git: folder paths, AVD names, container names, where the
+real service runs, the exact reset commands. They go in `docs/machine.local.md`, and the
+project's `.gitignore` has `*.local.md`. A committed doc points to that file and does not
+repeat it. On a new machine, a missing file means the setup is not done there yet: build it
+to the committed contract, then write the file.
+
 ## Contents
 
 ### `skills/`

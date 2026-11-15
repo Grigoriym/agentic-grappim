@@ -134,6 +134,7 @@ outcome; do not manufacture updates.
 | What it is | Where it goes |
 |---|---|
 | Convention, gotcha, or constraint specific to this project | project `CLAUDE.md` / `GEMINI.md` |
+| A fact true on one machine only (a path, an AVD name, a container name, a local service's folder) | the project's gitignored `docs/machine.local.md`; the committed doc keeps only the generic need |
 | A fact the project designates a doc for (architecture, decisions, deviations) | that doc (Step 0.5) |
 | Technique, procedure, or working habit that applies across projects | the shared skill in `agentic-grappim` or `~/.gemini/GEMINI.md` |
 | User's working style, or a correction with a why | memory (`user` / `feedback`) |
