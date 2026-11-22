@@ -84,6 +84,11 @@ Rules:
   a map, `any`, a plugin payload — the schema gives you shape but not content, so it
   cannot tell you whether a given field is actually present. Capture one real
   response.**
+  **Your own test data is one write path.** A field that is never `null` in every
+  fixture can still be `null` for a reporter whose rows were created another way (a web
+  form, an import, a row older than a migration). When a decode fails only for them,
+  check the source column three ways: is it nullable, does every writer always bind it,
+  and did a migration add it without a default.
   **And when behaviour is driven by config that "lives in a database" or is generated,
   find the repo that *writes* it before concluding it can't be read.** Consumer plus
   producer is rarely the whole system; a pipeline, a seeding job or an
