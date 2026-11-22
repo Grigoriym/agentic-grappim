@@ -134,6 +134,15 @@ old `androidx.test.espresso:espresso-core` (transitively pulled in below ~3.6, c
 (API 34+) hits this on the first run. Force a newer `espresso-core` (3.6.1+) as a direct
 dependency of the test source set rather than debugging the test itself.
 
+**Trust a newly created AVD only after `adb logcat -d -b crash` is quiet for a minute.** A
+graphics mismatch between a new system image and the emulator can abort `surfaceflinger` every few
+seconds while `sys.boot_completed` is 1. Then `screencap` writes the abort text into the `.png`
+with exit 0 (check with `file`), shell `nc`/`ping` report "Network is unreachable", and an install
+can vanish at the next restart. None of that is the app. **Read which process is crashing**
+(`grep ">>> "` in the crash buffer) before waiting it out: an API 37 image's
+`android.hardware.uwb-service` HAL crash-loops every 5 s from boot forever and is harmless, while
+`surfaceflinger` is the one that matters.
+
 ## Step 2. Tap accurately
 
 **`screencap`'s image is scaled relative to the device's real pixel grid.** Coordinates
@@ -217,6 +226,14 @@ Three dump-specific gotchas worth knowing before trusting a grep against it:
   field's placeholder. The field is still there and still tappable; compute its centre
   from the screenshot or from surrounding fields' known spacing rather than trusting an
   empty grep to mean "not rendered yet".
+- **A dump holds only what is on screen.** Rows of a scrolled `Column` or a lazy list below the
+  fold are not in it, so an empty grep for `checked="true"` or a label can mean "not scrolled to",
+  not "not set". Scroll, dump again, and only then call it missing.
+- **A Compose `FilterChip`'s `checked="true"` is on the chip node, not on its text node.**
+  Grepping the label's own node always reads `checked="false"`; match the `checkable` parent
+  that contains the label.
+  Same shape for an `IconButton`'s `enabled`: the `content-desc` is on the `Icon` child, which
+  always reads `enabled="true"`; the disabled state is on its `clickable` parent.
 - **An `ExposedDropdownMenuBox` anchor's clickable region is the entire field box**,
   label to bottom border, not a narrow strip around the value text — its
   `clickable="true"` bounds in the dump are usually noticeably taller than they look in
@@ -251,6 +268,9 @@ space) — `adb shell input text "Hey%s@admin"` — landed the full string corre
 Compare the field's actual content against what was sent before assuming a short
 result means the app itself rejected part of the input; try the `%s` substitution
 first for any string containing `<space>@`.
+**`input text` with `(`, `)`, `;`, `&` or quotes fails in the device shell** ("syntax error:
+unexpected '('"): `adb` hands the string to the device's `sh`, which parses it. Single-quote the
+text inside a double-quoted adb argument: `adb shell "input text '%s(ed.)'"`.
 
 **Clearing a field to retry: `input keycombination 113 29` (Ctrl+A) does not reliably
 select-all in a Compose `OutlinedTextField`/`BasicTextField`** — confirmed on a
@@ -371,6 +391,13 @@ doesn't:
   (e.g. `dat=https://github.com/...`, confirmed truncated rather than the real value) —
   this only reliably confirms a short URL. Past a short path, screenshot the browser's
   address bar instead (tap it to expand the display) and read the real value from there.
+- **An upgrade test installs the new build over the old one in place**: check both APKs'
+  `apksigner verify --print-certs` digest and `aapt2 dump badging` versionCode first (a
+  different cert fails `install -r`; a lower code refuses it), and `dumpsys package <pkg>` keeping
+  `firstInstallTime` while `lastUpdateTime` moves proves it really was an upgrade. Change a setting
+  on the old build beforehand, so "it survived" has something to check. After `install -r`,
+  `am start` can report "delivered to currently running top-most instance": force-stop and start
+  again before calling it a cold start.
 - **Coordinates and in-memory state don't survive a process boundary either.** If
   filters, sort order, or list position live in memory, a `force-stop` + relaunch can
   bring the same screen back in a *different* arrangement — re-screenshot after every
@@ -596,7 +623,9 @@ toggling is the practical option.)
   the picker's version, tapping a thumbnail may only *select* it — tapping an explicit
   **Done**/confirm control is what actually returns the `Uri` to the app. On an API 36
   `google_apis` AVD the photo picker's thumbnails have `content-desc` "Photo taken on …" and its
-  confirm is "Done". `ACTION_IMAGE_CAPTURE` there opens `com.android.camera2`: tap
+  confirm is "Done". Photos pushed in the same minute share that `content-desc`: push
+  solid-colour JPEGs and tell the thumbnails apart by one `getpixel` each, which also makes
+  "which image did the server store" a one-pixel check. `ACTION_IMAGE_CAPTURE` there opens `com.android.camera2`: tap
   `content-desc` "Shutter", then "Done"; the shot is the emulator's virtual scene.
 - **Shortcutting a share/view-intent test with `am start -a android.intent.action.VIEW -d
   file:///...` commonly fails with `open failed: EACCES (Permission denied)`**, even when the
@@ -653,7 +682,9 @@ toggling is the practical option.)
   (adjust to the device's resolution) pulls the drawer up. That swipe can silently no-op
   about as often as it works, with no error either way — screenshot after every attempt
   and retry rather than trusting a single call. `pm clear`/`force-stop` does not open or
-  close the drawer; it's independent launcher state.
+  close the drawer; it's independent launcher state. If it keeps failing (four in a row on an
+  API 37 Pixel launcher), check the icon's foreground on the splash screen instead when the
+  splash uses the same `@mipmap` resource.
 
 ## Step 5b. TalkBack — driving and verifying without audio
 
