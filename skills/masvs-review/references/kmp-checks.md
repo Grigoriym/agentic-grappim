@@ -108,6 +108,11 @@ grep -rn 'http://' --include=*.kt --include=*.xml . | grep -v /build/
 - **Ktor specifics**: the engine differs per platform (OkHttp/CIO/Darwin), so TLS config
   is per-actual. A trust override wired into one engine and not another is a per-platform
   finding, and `expect fun createEngine()` hides it.
+- **The image loader is a second HTTP client.** Coil's `coil-network-*` fetcher builds its own
+  client unless the app sets a singleton `ImageLoader` on the app's client. Then the app client's
+  trust override, auth and custom headers do not apply to images: a TOFU-only server fails, or a
+  header-guarded proxy rejects every thumbnail. Grep `setSingletonImageLoaderFactory`/`ImageLoader(`
+  and name which client each one uses.
 - **A credential header added in a Ktor plugin can follow a redirect off-host.** `onRequest`
   runs for the first hop only; `HttpRedirect` copies that request's headers onto every hop and
   strips only `Authorization` across authorities. Any other credential header (`X-API-Key`,
