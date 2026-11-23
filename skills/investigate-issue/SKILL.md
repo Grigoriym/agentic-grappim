@@ -80,7 +80,10 @@ Rules:
   the happy path forward.
 - **Read the other side of the boundary.** If the bug involves a server, API, or
   library, read that source or its spec. Do not reason from memory about what a
-  third party does. **Where the contract is deliberately generic — name/value pairs,
+  third party does. For a UI fix, the platform's design guidance (component limits,
+  layout patterns) is part of that other side: check each option against it before
+  recommending one, because a fix that works mechanically can still be off-spec.
+  **Where the contract is deliberately generic — name/value pairs,
   a map, `any`, a plugin payload — the schema gives you shape but not content, so it
   cannot tell you whether a given field is actually present. Capture one real
   response.**
