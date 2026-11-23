@@ -729,6 +729,28 @@ Android builds — then drive it, and verify via the accessibility tree rather t
   clickable="true">` with the label/switch as non-focusable children underneath — confirm exactly
   that shape rather than trying to infer it from a screenshot.
 
+## Step 5c. Before/after screenshots for a PR
+
+A PR that changes something visible on screen carries before/after screenshots in its body
+(user's rule, first in Wallosmobile, 2026-11-23).
+
+1. **After** = the PR's build. **Before** = the base branch's code for the changed paths only:
+   `git stash -u`, `git checkout <base> -- <changed paths>`, install, screenshot, then
+   `git checkout HEAD -- <changed paths>` and `git stash pop`. Same AVD, same data, same scroll
+   position and screen state for both — otherwise the diff shows more than the change.
+2. Put them side by side: `ffmpeg -i before.png -i after.png -filter_complex hstack pair.png`
+   (no ImageMagick or Pillow needed).
+3. `gh` can't attach images to a PR. Commit them to an orphan branch (e.g. `pr-assets`) under
+   `pr-<n>/`, push, and embed
+   `<img width="600" src="https://raw.githubusercontent.com/<owner>/<repo>/<sha>/pr-<n>/pair.png">`.
+   Pin the commit sha, not the branch name. **Never delete that branch** — merged PRs' images
+   point into it. If the branch doesn't exist yet, create it from a worktree so the working
+   tree is untouched: `git worktree add --detach ../pr-assets && cd ../pr-assets && git
+   checkout --orphan pr-assets && git rm -rf -q .`, then add the images, commit,
+   `git push -u origin pr-assets`.
+4. In a public repo the screenshots are public too. Don't photograph a screen that shows more
+   than the change needs (real emails, server URLs, tokens).
+
 ## Step 6. Write down what's new
 
 If this session found a gotcha specific to *this* app (a screen's own field ordering, a

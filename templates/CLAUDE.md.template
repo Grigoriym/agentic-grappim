@@ -101,6 +101,11 @@ first — it is often for a problem this toolchain doesn't have.
   report to a distinct path immediately. Overwrite the "before" once and the diff comes
   back showing nothing changed anywhere — which reads like a plausible result rather
   than a mistake.
+- **A PR that changes something visible on screen carries before/after screenshots in
+  its body** — before = the base branch, after = the PR, same device and same screen
+  state, side by side. How to take, host and embed them: the `emulator-testing` skill,
+  *Step 5c*. <Name this repo's image branch, e.g. `pr-assets`, and any screen not to
+  photograph because it shows real data.>
 
 ## Plain technical English
 
