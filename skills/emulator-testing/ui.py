@@ -12,7 +12,9 @@ import sys
 
 
 def dump():
-    subprocess.run(["adb", "shell", "uiautomator", "dump", "/sdcard/window_dump.xml"], capture_output=True)
+    d = subprocess.run(["adb", "shell", "uiautomator", "dump", "/sdcard/window_dump.xml"], capture_output=True, text=True)
+    if d.returncode != 0:
+        sys.exit(f"adb failed (set ANDROID_SERIAL when several devices are attached): {d.stderr.strip()}")
     return subprocess.run(["adb", "exec-out", "cat", "/sdcard/window_dump.xml"], capture_output=True, text=True).stdout
 
 
