@@ -1,0 +1,32 @@
+{
+  "type": "object",
+  "required": ["scenario", "steps", "findings"],
+  "properties": {
+    "scenario": {"type": "string"},
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["index", "verdict", "screens", "observed"],
+        "properties": {
+          "index": {"type": "integer"},
+          "verdict": {"enum": ["passed", "failed", "blocked"]},
+          "screens": {"type": "array", "items": {"type": "string"}},
+          "observed": {"type": "string"}
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title", "severity", "screens"],
+        "properties": {
+          "title": {"type": "string"},
+          "severity": {"enum": ["blocker", "major", "minor", "cosmetic"]},
+          "screens": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "type": "object",
+  "required": ["range", "scenarios", "skipped"],
+  "properties": {
+    "range": {"type": "string"},
+    "scenarios": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "why", "preconditions", "steps", "checks"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+          "title": {"type": "string"},
+          "why": {"type": "string", "description": "Which commit(s)/PR and what behaviour this covers"},
+          "preconditions": {"type": "array", "items": {"type": "string"}},
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["do", "expect"],
+              "properties": {"do": {"type": "string"}, "expect": {"type": "string"}}
+            }
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "args", "verifies"],
+              "properties": {
+                "name": {"type": "string"},
+                "args": {"type": "object"},
+                "verifies": {"type": "string"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "skipped": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["commit", "reason"],
+        "properties": {"commit": {"type": "string"}, "reason": {"type": "string"}}
+      }
+    }
+  }
+}
