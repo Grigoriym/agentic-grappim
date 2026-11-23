@@ -315,9 +315,9 @@ then update this table.
 
 | # | Task | Status |
 |---|---|---|
-| 1 | `tools/screen.py` + `tools/type.py` | ⬅ NEXT |
-| 2 | Executor alone: `run.sh <project> run login.yaml`, no checks yet | |
-| 3 | Taiga `checks.py` + seed, `create-story.yaml`, verdict merge | |
+| 1 | `tools/screen.py` + `tools/type.py` | ✅ prototype, used in trial 1 (2026-11-23). `type.py` is untested |
+| 2 | Executor alone: `run.sh <project> run <scenario>`, no checks yet. The trial's hand-run commands are the starting point | ⬅ NEXT |
+| 3 | Taiga `checks.py` + seed, verdict merge. First check: the #494 checkbox toggle through the API (see Trial 1, *Verdict*) | |
 | 4 | Taiga smoke set (5–10 scenarios), `smoke` mode | |
 | 5 | Planner + `verify` mode | |
 | 6 | `explore` mode with personas | |

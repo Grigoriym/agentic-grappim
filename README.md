@@ -91,6 +91,15 @@ to the committed contract, then write the file.
 |-------|-------------|
 | `koin-expert` | Koin DI expert for TaigaMobileNova KMP — diagnoses `NoBeanDefinitionException`, broken expect/actual `@Configuration`, missing module wiring, and `KoinGraphTest` failures |
 
+### `agent-qa/` (in progress)
+
+On-device QA runs driven by headless `claude -p` sessions. A **planner** turns a git range into
+a checklist, an **executor** drives the emulator through it, and a runner decides pass/fail from
+deterministic checks (backend API, logcat, app storage). Each app repo supplies its own build,
+test backend, seed data, scenarios and checks. Not a skill yet: there's no runner.
+**Start with `agent-qa/DESIGN.md`.** Its *Trial 1* section (2026-11-23, TaigaMobileNova) overrides
+the older sections where they disagree, and its *Plan* table names the next task.
+
 ## Adding a skill
 
 1. Create `skills/<name>/SKILL.md` with `name` and `description` frontmatter. Long

@@ -89,6 +89,12 @@ or run a suite on it, since the suite's orchestrator wipes app data. It works th
 way too: another session can pick up an emulator you booted. Check what's in the
 foreground before each step, and don't `emu kill` it while it's still in use.
 
+**Shut down an emulator you booted once the testing is done.** Before you report back,
+run `adb emu kill` (with `-s <serial>` when several are attached) and confirm `adb devices`
+no longer lists it. A headless emulator has no window, so nobody notices it running for
+hours and holding RAM and CPU. Leave it up only when the user says they'll keep testing, or
+another session is using it, and say in your report that it's still running.
+
 **On a device the user is also driving, read which app they're in before any `pm clear`/`pm revoke`:**
 `dumpsys activity activities | grep topResumedActivity`. With several flavors installed, a command
 aimed at the wrong package succeeds silently and you report a reset that never happened.
@@ -218,7 +224,9 @@ Three dump-specific gotchas worth knowing before trusting a grep against it:
 - **A day in a `DatePickerDialog` calendar grid is addressed by `content-desc`**
   (e.g. "Friday, August 14, 2026"), not by the visible digit's `text` — grepping for the
   digit finds the wrong node and a mistap lands on a different day with no visible error
-  until the field is checked afterward.
+  until the field is checked afterward. A Compose Material 3 `DatePicker` puts the same full
+  date in the day's `text` instead ("Tuesday, November 10, 2026"); `ui.py tap` with the full
+  date finds either form.
 - **A custom field built from a `readOnly` `OutlinedTextField` plus a transparent
   click-overlay `Box`** — the usual Compose shape for a field that opens something other
   than the keyboard (a menu, a date picker) — can make its own placeholder text
