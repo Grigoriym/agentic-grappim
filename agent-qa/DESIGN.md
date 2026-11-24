@@ -399,6 +399,9 @@ bars). Files in [`trials/3-taigamobilenova/`](trials/3-taigamobilenova/).
   - **Rotation needs `Bash(adb shell settings put system user_rotation:*)`**, with
     `accelerometer_rotation 0` set by the runner. The value for "landscape" differs per device:
     0 is landscape on the tablet and portrait on the phone. Pass it per scenario.
+  - **Re-running the same scenario files after the fix was the cheap regression check.** T2 7/7,
+    T3 6/6 and P1 5/5 on the fixed build, about $0.77, with no edits to the scenarios. This is the
+    reuse `smoke` mode should get for free.
   - **The executor's `findings` need the reviewer to reproduce them.** One was environmental (the
     emulator offline), one cosmetic, two real.
 
