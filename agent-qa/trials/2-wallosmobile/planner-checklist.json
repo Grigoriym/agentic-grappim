@@ -1,0 +1,73 @@
+{
+ "range": "dev..feat/persist-subscription-filters",
+ "scenarios": [
+  {
+   "id": "filter-sort-survive-force-stop",
+   "title": "Subscriptions filter and sort persist across a fresh launch",
+   "why": "e477e5d: criteria moved from SavedStateHandle (lost on fresh launch) to DataStore; restored before first rows draw.",
+   "preconditions": [
+    "At least 4 subscriptions named with {{tag}}, in at least two different statuses/categories/payers so a filter changes the list (e.g. two active and two inactive, or two categories)",
+    "Stored criteria cleared: app logged in fresh, no previous filter"
+   ],
+   "steps": [
+    {
+     "do": "Open the Subscriptions list and note the default order and the full row count.",
+     "expect": "All {{tag}} subscriptions show, sorted by next payment."
+    },
+    {
+     "do": "Open the filter sheet, pick one category (or status) that matches only some rows, and change the sort to a different option (e.g. Name or Price). Dismiss the sheet.",
+     "expect": "List shows only the matching rows in the new order; row count is smaller than before."
+    },
+    {
+     "do": "Force-stop the app (adb shell am force-stop com.grappim.wallosmobile.debug) and relaunch it, then open the Subscriptions list.",
+     "expect": "The very first drawn list is already filtered and sorted the same way (no flash of the full unfiltered list); the filter sheet shows the chosen category and sort selected."
+    },
+    {
+     "do": "Press Clear in the filter sheet, then force-stop and relaunch again.",
+     "expect": "Full list returns after Clear; after relaunch it is still unfiltered, but the previously chosen sort order is still applied (Clear leaves sort alone)."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "id": "criteria-cleared-on-disconnect",
+   "title": "Disconnecting drops the saved filter and sort",
+   "why": "e477e5d: ApiKeyStorage.clear() now also removes stored criteria in the same edit as the key.",
+   "preconditions": [
+    "Logged in with a saved filter and non-default sort active (from previous scenario)"
+   ],
+   "steps": [
+    {
+     "do": "Go to Settings and disconnect from the server, then log in again with the same credentials.",
+     "expect": "Login succeeds and the Subscriptions list opens."
+    },
+    {
+     "do": "Look at the Subscriptions list and open the filter sheet.",
+     "expect": "No filter is applied (all rows visible), and sort is the default (Next payment)."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "id": "opening-screen-writes-nothing",
+   "title": "Merely opening the list does not overwrite saved criteria with defaults",
+   "why": "e477e5d: criteria are restored before persisting starts and only user changes are written (drop(1)); a regression would reset saved criteria on open.",
+   "preconditions": [
+    "A filter and sort already saved from a previous run"
+   ],
+   "steps": [
+    {
+     "do": "Force-stop and relaunch, open Subscriptions, do not touch the filter, navigate to another drawer screen and back, then force-stop and relaunch once more.",
+     "expect": "The saved filter and sort are still applied after both relaunches."
+    }
+   ],
+   "checks": []
+  }
+ ],
+ "skipped": [
+  {
+   "commit": "d8af532",
+   "reason": "Refactor only (SubscriptionsViewModel takes Json from DI); no behaviour change, and a DI qualifier/graph mistake would show up as a cold-start crash in every scenario above."
+  }
+ ]
+}

@@ -1,12 +1,13 @@
 # agent-qa — design
 
 **Status:** draft, 2026-11-22. Prototype pieces exist: `briefs/planner.md`, `briefs/executor.md`,
-`schemas/`, `tools/screen.py`, `tools/type.py`. No runner yet. Trial 1 ran 2026-11-23: see
-[Trial 1](#trial-1-2026-11-23); its lessons override the sections above where they disagree.
+`schemas/`, `tools/screen.py`, `tools/type.py`. No runner yet. Trial 1 (TaigaMobileNova) ran
+2026-11-23 and Trial 2 (wallosmobile) ran 2026-11-24: see [Trial 1](#trial-1-2026-11-23) and
+[Trial 2](#trial-2-2026-11-24); their lessons override the sections above where they disagree.
 
 Local, on-device QA runs driven by headless Claude Code sessions (`claude -p`). The generic
 runner lives here in agentic-grappim. Each app repo supplies its own prerequisites: build, test
-backend, credentials, scenarios and checks. First consumer: TaigaMobileNova.
+backend, credentials, scenarios and checks. Consumers so far: TaigaMobileNova, wallosmobile.
 
 ## Goals and non-goals
 
@@ -155,6 +156,19 @@ with no glob).
 | Seed | create project `agent-qa` through the API if it's missing, with a few stories |
 | Reset | `pm clear` (the logged-in-to-`:9100` trap in EMULATOR_TESTING.md goes away) |
 | Checks | `checks.py` calls the Taiga REST API (`/api/v1/auth`, `/userstories`, …). It reads the same `TAIGA_INTEGRATION_URL/USERNAME/PASSWORD` env vars as the Kotlin integration tests, so one set of credentials covers both |
+
+### wallosmobile specifically
+
+| Piece | Value / source |
+|---|---|
+| Build / install | `./gradlew :androidApp:installGplayDebug -PgplayBuild`. Needs `androidApp/src/gplay/google-services.json` (machine-local) |
+| Package / activity | `com.grappim.wallosmobile.debug` / `com.grappim.wallosmobile.MainActivity` |
+| Backend | local Docker Wallos, host `http://localhost:8282`, emulator `http://10.0.2.2:8282`. Preflight `curl -sf localhost:8282` |
+| Test user | from the repo's `docs/local-info.txt` (LAN-only, committed on purpose) → `config.local.sh` |
+| Seed | usually none: the real dataset has 36 subscriptions, Active and Inactive. Write checks can use the Wallos API (key from the db via `docker exec`) |
+| Reset | at least `am force-stop`; scenarios otherwise leak UI state (an open filter sheet) |
+| Checks | app storage: `run-as <pkg> cat files/datastore/wallos_storage.preferences_pb \| strings`, one DataStore file. The API key is stored encrypted (`v1:` prefix): check presence, not value |
+| UI traps | login is one screen and the layout shifts after the first tap; "Log Out" in Settings has no confirm; default sort is Next payment, so Inactive rows (past dates) fill the first screen and the list *looks* filtered |
 
 ## Shared pieces built here
 
@@ -308,6 +322,58 @@ and no check ran. The reviewer agreed with the screenshots, but the summary must
 passed" for that. The one deterministic check #494 allows is still missing: tap "task beta" and
 assert through the API that the description now holds `- [x] task beta`, with alpha unchanged.
 
+## Trial 2 (2026-11-24)
+
+Hand-run on wallosmobile PR #155 (`dev..feat/persist-subscription-filters`): e477e5d moves the
+Subscriptions filter and sort from `SavedStateHandle` to DataStore and clears them on disconnect;
+d8af532 is a DI refactor. Pixel_10a (API 37), local Docker Wallos. The wallosmobile session played
+the runner. Its scripts and scenarios are kept in [`trials/2-wallosmobile/`](trials/2-wallosmobile/)
+(`run-exec.sh` is the starting point for task 2).
+
+### What happened
+
+| Stage | Result | Cost |
+|---|---|---|
+| Planner (Sonnet, read-only + git) | 3 scenarios, d8af532 correctly skipped. **Zero checks**, asked for seed data that wasn't needed, and an unobservable "no flash" expectation. Rewritten by hand into A/B/C | 13 s, 4 turns, $0.25 |
+| Executor A: persists across force-stop + Dashboard round trip | Steps 2–4 passed. Step 1 "failed": a misread (below) | 102 s, 55 turns, $0.37 |
+| Executor B: Clear filters keeps the sort | 3/3 passed | 59 s, 27 turns, $0.22 |
+| Executor C: disconnect + re-login drops the criteria | 4/4 passed | 76 s, 42 turns, $0.26 |
+
+Verdicts from app storage (`trials/2-wallosmobile/check.sh`, key `subscriptions_criteria`): absent
+before A; `{"status":"INACTIVE","sort":"NAME"}` after A (restore works, opening the screen writes no
+defaults); `{"sort":"NAME"}` after B; absent after C with the API key still present. All PASS.
+A step 1 is a **MISMATCH** the check resolved: the default sort puts Inactive rows first, the
+executor scrolled up instead of down and decided a filter was already saved. Total $1.10.
+
+### Changes made
+
+- **Planner brief:** checks read `backend_api`, `app_storage` (run-as) or `logcat` (Trial 1's lesson,
+  now in the brief); a data change with no check is a planning mistake; seed only when existing data
+  can't show the behaviour; no sub-second expectations; name *process death* vs *fresh launch* and
+  pick the one the old code fails.
+- **Executor brief:** a separate *fresh launch* shape (`am force-stop` + `am start`); scroll both
+  ways before calling rows missing; use the literal tools path; bare screen numbers.
+- **Schemas:** checklist checks gain `reads` (required) and optional `after_step`; `screens` must
+  match `^[0-9]{2,3}$` (A returned `03`, B and C `shots/03.png`).
+
+### For the runner (task 2)
+
+- **Process death can't tell old code from new here.** `SavedStateHandle` survives `am kill`, so only
+  `am force-stop` + start exercises the change. The allowlist needs both shapes:
+  `Bash(adb shell am kill:*)` and `Bash(adb shell am force-stop <package>)`.
+- **Checks after a step.** The runner can't step into a running session, so the trial split the work
+  into three executor sessions at the check points. Either the runner splits scenarios at each
+  `after_step`, or the executor gets one allowed "checkpoint" command that the runner answers.
+- **Pin the device.** Emulators are shared between sessions: an earlier hand run drove the
+  TaigaMobileNova session's Pixel_Tablet by accident. Set `ANDROID_SERIAL` and assert
+  `adb emu avd name` before every executor session (as `run-exec.sh` does).
+- **Snapshots bring back old APKs and old storage.** Booting from `default_boot` did both, which
+  confirms Trial 1's rule: `install -r` the APK under test after any snapshot.
+- **Reset between scenarios**, at least `am force-stop`: B ended with the filter sheet open and C
+  started on it.
+- **Allowlist both tool-path forms** (literal and `$AQ/...`) until every brief and prompt uses the
+  literal path.
+
 ## Plan
 
 Each task fits one clean session. Take the one marked NEXT, finish it, check it with its *Done when*,
@@ -316,8 +382,8 @@ then update this table.
 | # | Task | Status |
 |---|---|---|
 | 1 | `tools/screen.py` + `tools/type.py` | ✅ prototype, used in trial 1 (2026-11-23). `type.py` is untested |
-| 2 | Executor alone: `run.sh <project> run <scenario>`, no checks yet. The trial's hand-run commands are the starting point | ⬅ NEXT |
-| 3 | Taiga `checks.py` + seed, verdict merge. First check: the #494 checkbox toggle through the API (see Trial 1, *Verdict*) | |
+| 2 | Executor alone: `run.sh <project> run <scenario>`, no checks yet. Start from `trials/2-wallosmobile/run-exec.sh`; see Trial 2, *For the runner* | ⬅ NEXT |
+| 3 | Taiga `checks.py` + seed, verdict merge, `after_step` checks. First check: the #494 checkbox toggle through the API (see Trial 1, *Verdict*). wallosmobile's `subscriptions_criteria` storage check is a ready second consumer | |
 | 4 | Taiga smoke set (5–10 scenarios), `smoke` mode | |
 | 5 | Planner + `verify` mode | |
 | 6 | `explore` mode with personas | |

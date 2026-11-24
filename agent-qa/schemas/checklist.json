@@ -1,35 +1,94 @@
 {
   "type": "object",
-  "required": ["range", "scenarios", "skipped"],
+  "required": [
+    "range",
+    "scenarios",
+    "skipped"
+  ],
   "properties": {
-    "range": {"type": "string"},
+    "range": {
+      "type": "string"
+    },
     "scenarios": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "title", "why", "preconditions", "steps", "checks"],
+        "required": [
+          "id",
+          "title",
+          "why",
+          "preconditions",
+          "steps",
+          "checks"
+        ],
         "properties": {
-          "id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
-          "title": {"type": "string"},
-          "why": {"type": "string", "description": "Which commit(s)/PR and what behaviour this covers"},
-          "preconditions": {"type": "array", "items": {"type": "string"}},
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "why": {
+            "type": "string",
+            "description": "Which commit(s)/PR and what behaviour this covers"
+          },
+          "preconditions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "steps": {
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["do", "expect"],
-              "properties": {"do": {"type": "string"}, "expect": {"type": "string"}}
+              "required": [
+                "do",
+                "expect"
+              ],
+              "properties": {
+                "do": {
+                  "type": "string"
+                },
+                "expect": {
+                  "type": "string"
+                }
+              }
             }
           },
           "checks": {
             "type": "array",
             "items": {
               "type": "object",
-              "required": ["name", "args", "verifies"],
+              "required": [
+                "name",
+                "reads",
+                "args",
+                "verifies"
+              ],
               "properties": {
-                "name": {"type": "string"},
-                "args": {"type": "object"},
-                "verifies": {"type": "string"}
+                "name": {
+                  "type": "string"
+                },
+                "reads": {
+                  "enum": [
+                    "backend_api",
+                    "app_storage",
+                    "logcat"
+                  ]
+                },
+                "after_step": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Run right after this step (1-based) instead of at the end"
+                },
+                "args": {
+                  "type": "object"
+                },
+                "verifies": {
+                  "type": "string"
+                }
               }
             }
           }
@@ -40,8 +99,18 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["commit", "reason"],
-        "properties": {"commit": {"type": "string"}, "reason": {"type": "string"}}
+        "required": [
+          "commit",
+          "reason"
+        ],
+        "properties": {
+          "commit": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
       }
     }
   }
