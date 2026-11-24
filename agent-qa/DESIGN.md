@@ -2,7 +2,7 @@
 
 **Status:** draft, 2026-11-22. Prototype pieces exist: `briefs/planner.md`, `briefs/executor.md`,
 `schemas/`, `tools/screen.py`, `tools/type.py`. No runner yet. Trial 1 (TaigaMobileNova) ran
-2026-11-23 and Trial 2 (wallosmobile) ran 2026-11-24: see [Trial 1](#trial-1-2026-11-23) and
+2026-11-23, Trial 2 (wallosmobile) and Trial 3 (TaigaMobileNova tablet) ran 2026-11-24: see [Trial 1](#trial-1-2026-11-23) and
 [Trial 2](#trial-2-2026-11-24); their lessons override the sections above where they disagree.
 
 Local, on-device QA runs driven by headless Claude Code sessions (`claude -p`). The generic
@@ -373,6 +373,34 @@ executor scrolled up instead of down and decided a filter was already saved. Tot
   started on it.
 - **Allowlist both tool-path forms** (literal and `$AQ/...`) until every brief and prompt uses the
   literal path.
+
+## Trial 3 (2026-11-24)
+
+Hand-run on TaigaMobileNova PR #500 (tablet: expandable rail, two-pane Issues with per-pane top
+bars). Files in [`trials/3-taigamobilenova/`](trials/3-taigamobilenova/).
+
+- **Planner** (Sonnet, $0.23, 31 s): 6 scenarios. The reviewer fixed wrong UI labels ("Dashboard"
+  is "Board" in the rail), removed a log-out item that no longer exists, merged overlapping
+  scenarios, dropped a request-count check unrelated to the change, and added the rail-scroll step
+  that the fix itself is about. Rewritten into 4 scenarios.
+- **Executor:** T1 4/4, T2 7/7, T3 6/6, P1 4/5. About $0.92 for the four runs, 34–74 s each.
+- **It found two real bugs the author's own emulator pass missed:**
+  - Phone landscape went two-pane without the ≡, which cut off the drawer.
+  - On a tablet the keyboard popped up uninvited when two-pane appeared.
+  - Both came from the executor following steps literally (rotate, "+" then back) and from
+    `findings`, not from step verdicts.
+- **For the runner:**
+  - **UI-only changes have almost no deterministic checks.** "No crash lines from the app's pid"
+    was the only one. Every step verdict here is UNVERIFIED by the table above; the value was in
+    the findings.
+  - **The tablet AVD's network drops repeatedly mid-run.** The runner's wifi toggle didn't always
+    recover it in 4 tries. Preflight must check from the app's UID (`run-as … nc`) and fail
+    loudly, not run on.
+  - **Rotation needs `Bash(adb shell settings put system user_rotation:*)`**, with
+    `accelerometer_rotation 0` set by the runner. The value for "landscape" differs per device:
+    0 is landscape on the tablet and portrait on the phone. Pass it per scenario.
+  - **The executor's `findings` need the reviewer to reproduce them.** One was environmental (the
+    emulator offline), one cosmetic, two real.
 
 ## Plan
 

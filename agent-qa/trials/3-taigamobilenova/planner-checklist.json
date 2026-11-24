@@ -1,0 +1,221 @@
+{
+ "range": "dev..feat/tablet-rail-and-list-detail",
+ "scenarios": [
+  {
+   "id": "tablet-rail-collapsed-expand",
+   "title": "Tablet landscape: collapsed rail shows only primary destinations, expands to all",
+   "why": "7143a965: wide windows use WideNavigationRailCollapsed with primary=false on Team/Wiki/Open-closed sprints; expand/collapse button with content-descriptions; revisit 45 (clipped rail).",
+   "preconditions": [
+    "Tablet AVD, landscape (1280x800dp), logged in as admin at http://10.0.2.2:9000, main-project selected"
+   ],
+   "steps": [
+    {
+     "do": "Open the Dashboard on the tablet in landscape.",
+     "expect": "A navigation rail is shown on the left in collapsed form (icons, no modal drawer), with a \u2261 button at the top (content-desc 'Expand navigation'). Team, Wiki and sprint-list entries are NOT in the collapsed rail; Dashboard, Epics, Issues, Kanban and Settings are."
+    },
+    {
+     "do": "Tap the \u2261 'Expand navigation' button.",
+     "expect": "The rail expands with labels and now also lists Team (and Wiki / Open sprints / Closed sprints where the project has them). Settings/log-out entry is fully visible, not clipped. Button now reads 'Collapse navigation'."
+    },
+    {
+     "do": "Tap 'Team' in the expanded rail.",
+     "expect": "Team screen opens; Team is highlighted as selected."
+    },
+    {
+     "do": "Tap 'Collapse navigation'.",
+     "expect": "Rail returns to the collapsed icon-only form."
+    },
+    {
+     "do": "Look at the top bar of the Team screen.",
+     "expect": "No hamburger/menu icon in the top bar (the rail replaces it)."
+    }
+   ],
+   "checks": [
+    {
+     "name": "rail-content-descriptions-logcat-free",
+     "reads": "logcat",
+     "args": {
+      "filter": "AndroidRuntime",
+      "level": "E"
+     },
+     "verifies": "No FATAL EXCEPTION lines in logcat during expand/collapse and navigation to Team."
+    }
+   ]
+  },
+  {
+   "id": "phone-landscape-modal-drawer",
+   "title": "Phone landscape and portrait keep the modal drawer, not a rail/bottom bar",
+   "why": "7143a965: useModalDrawer when width <600dp OR height <480dp; previously a phone in landscape (wide, short) got a rail/bottom bar with up to 12 items.",
+   "preconditions": [
+    "Phone AVD Pixel_10a, logged in as admin, main-project selected"
+   ],
+   "steps": [
+    {
+     "do": "On the phone in portrait, open Dashboard.",
+     "expect": "Top bar has a hamburger icon; no rail or bottom bar. Tapping the hamburger opens a modal drawer with all destinations."
+    },
+    {
+     "do": "Rotate the phone to landscape.",
+     "expect": "Still the hamburger + modal drawer; no navigation rail or bottom navigation bar appears."
+    },
+    {
+     "do": "Open the drawer in landscape and tap 'Issues'.",
+     "expect": "Drawer closes and the Issues list opens as a single pane (no two-pane split)."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "id": "tablet-issues-two-pane",
+   "title": "Tablet landscape: Issues shows list and detail side by side",
+   "why": "86cabbbc / 7143a965: list-detail scene strategy re-enabled for Issues (listPane / detailPane) on wide windows.",
+   "preconditions": [
+    "Tablet AVD landscape, logged in as admin, main-project has issues #3 'Issue 23vv' and #16"
+   ],
+   "steps": [
+    {
+     "do": "In the rail tap 'Issues'.",
+     "expect": "Issues list is shown; the right pane shows an empty/placeholder detail area (two panes visible)."
+    },
+    {
+     "do": "Tap issue #3 'Issue 23vv'.",
+     "expect": "Detail of #3 appears in the right pane while the list stays visible on the left; list row for #3 stays visible."
+    },
+    {
+     "do": "Tap issue #16 in the left list.",
+     "expect": "The right pane switches to #16's details; the list is still shown."
+    },
+    {
+     "do": "Rotate to portrait (800dp wide).",
+     "expect": "Layout collapses to one pane showing the currently opened issue detail (no crash); back goes to the list."
+    },
+    {
+     "do": "Rotate back to landscape.",
+     "expect": "Two panes are shown again with no crash."
+    }
+   ],
+   "checks": [
+    {
+     "name": "issue-detail-requests",
+     "reads": "logcat",
+     "args": {
+      "tag": "Ktor",
+      "pattern": "REQUEST: .*issues/by_ref|issues/(\\d+)",
+      "clear_before": "step 2"
+     },
+     "verifies": "After opening #3 then #16, logcat shows exactly one detail fetch per opened issue (no duplicate refetch loop) and no 'failed with exception'."
+    },
+    {
+     "name": "no-crash",
+     "reads": "logcat",
+     "args": {
+      "filter": "AndroidRuntime",
+      "level": "E"
+     },
+     "verifies": "No FATAL EXCEPTION / 'Missed recording an endGroup' lines after the whole sequence."
+    }
+   ]
+  },
+  {
+   "id": "tablet-issues-detail-push-userstory",
+   "title": "Two-pane: pushing User Story from issue detail does not crash (old step 12c bug)",
+   "why": "86cabbbc/UserStoryNavGraph: UserStoryDetails pushed from the detail pane previously crashed with 'Missed recording an endGroup'; two-pane max for Issues.",
+   "preconditions": [
+    "Tablet landscape, admin; issue #3 'Issue 23vv' is already promoted to user story #18"
+   ],
+   "steps": [
+    {
+     "do": "Open Issues and tap #3 'Issue 23vv'.",
+     "expect": "Two panes: list left, issue #3 detail right; detail shows a link/section for the promoted user story #18."
+    },
+    {
+     "do": "In the detail pane, tap the user story #18 link.",
+     "expect": "User story #18 details open without the app crashing; the screen still has at most two panes (issues list stays on the left or the story replaces the detail on the right)."
+    },
+    {
+     "do": "Press system Back.",
+     "expect": "Returns to issue #3 detail in the right pane with the list on the left; no crash."
+    }
+   ],
+   "checks": [
+    {
+     "name": "no-compose-crash",
+     "reads": "logcat",
+     "args": {
+      "filter": "AndroidRuntime|endGroup",
+      "level": "E"
+     },
+     "verifies": "Logcat has no FATAL EXCEPTION or 'Missed recording an endGroup' after the push and back."
+    }
+   ]
+  },
+  {
+   "id": "tablet-pane-topbars-after-back",
+   "title": "Each pane shows its own top bar actions, also after back navigation (old step 12c app-bar bug)",
+   "why": "77709c87: each list-detail pane draws its own top bar (PaneTopBars) so the list's '+' no longer overwrites the detail's '\u22ee' after back.",
+   "preconditions": [
+    "Tablet landscape, admin; issue #3 and user story #18 exist"
+   ],
+   "steps": [
+    {
+     "do": "Open Issues, tap #3.",
+     "expect": "The list pane has its own top bar with '+' (create issue); the detail pane has its own top bar with '\u22ee' (more) and a title for the issue. There is no single global top bar over both."
+    },
+    {
+     "do": "Tap the user story #18 link in the detail pane, then press Back.",
+     "expect": "After returning, the list pane still shows '+' and the detail pane shows '\u22ee' (the old bug showed '+' in place of '\u22ee')."
+    },
+    {
+     "do": "Tap '\u22ee' in the detail pane.",
+     "expect": "The issue's overflow menu opens (e.g. edit/delete options)."
+    },
+    {
+     "do": "Dismiss the menu, tap '+' in the list pane.",
+     "expect": "Create Issue screen opens."
+    },
+    {
+     "do": "Press Back.",
+     "expect": "Issues two-pane again with '+' and '\u22ee' both present."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "id": "tablet-single-pane-topbar-and-back",
+   "title": "Single-pane screens on tablet keep one top bar; no hamburger; back arrow works",
+   "why": "MainScreen: top bar hidden only while panes draw their own; withoutMenuIcon on wide windows.",
+   "preconditions": [
+    "Tablet landscape, admin"
+   ],
+   "steps": [
+    {
+     "do": "Open Epics from the rail.",
+     "expect": "Normal single top bar with title and its actions, no hamburger icon."
+    },
+    {
+     "do": "Open Issues, tap #16, then rotate to portrait.",
+     "expect": "Single pane issue detail with exactly one top bar (back arrow, '\u22ee'), not two stacked bars."
+    },
+    {
+     "do": "Tap the back arrow.",
+     "expect": "Issues list shows with its top bar and '+'."
+    },
+    {
+     "do": "On the phone AVD, open Issues, tap #16.",
+     "expect": "Single pane detail with one top bar and back arrow; Back returns to the list with '+'."
+    }
+   ],
+   "checks": []
+  }
+ ],
+ "skipped": [
+  {
+   "commit": "ad4f3720",
+   "reason": "docs only (CLAUDE.md, docs/*); no app code or resources"
+  },
+  {
+   "commit": "cfdbde62",
+   "reason": "docs only (plan, checklist, revisit notes)"
+  }
+ ]
+}
