@@ -48,7 +48,8 @@ ls /dev/tty{USB,ACM}* 2>/dev/null
   writing anything, and compare the MAC with the board's part sheet. Do it after
   **every** replug, not once per session: a user rewiring between checks can pick up
   a different board of the same kind without saying so, and a result then lands on
-  the wrong unit.
+  the wrong unit. `chip-id` resets the board too: if the firmware moves something at
+  boot (a motor catching up), wait until it has stopped, or the reset cuts the move.
 
   ```bash
   . ~/esp/esp-idf/export.sh >/dev/null && esptool -p <port> chip-id
@@ -149,9 +150,11 @@ assembles, which isn't in the binary), and `cmp build/<app>.bin build/<app>_flas
 
 ## Step 5. Checks that need the user's hands or eyes
 
-- **Hands** (turn a knob, press a button, plug something): write the steps in the
-  reply *before* starting the capture, run the capture in the background with a long
-  enough window (~40 s), and read the output when it ends. Check that every written
+- **Hands** (turn a knob, press a button, plug something): write the steps and end
+  the turn; start the capture only after the user says they're ready. Steps written
+  and a capture started in the same turn ran while the user wasn't looking and caught
+  nothing ("let me know beforehand"). Then capture with a long enough window (~40 s),
+  save the whole output (a `tail` cut events off), and read it when it ends. Check that every written
   step shows up in the capture: a step missing from it (the user stopped early, the
   capture ended) is unverified, and the report says which ones.
 - **Eyes** (what's on the screen, which way is up, colours): ask. A screen can keep its
