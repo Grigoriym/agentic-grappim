@@ -237,6 +237,9 @@ Three dump-specific gotchas worth knowing before trusting a grep against it:
 - **A dump holds only what is on screen.** Rows of a scrolled `Column` or a lazy list below the
   fold are not in it, so an empty grep for `checked="true"` or a label can mean "not scrolled to",
   not "not set". Scroll, dump again, and only then call it missing.
+  To walk a long list dump by dump, swipe slowly (about 800 px over 1500 ms): a 400 ms
+  `input swipe` flings, a row passes between two dumps, and the walk reports a gap the app
+  does not have.
 - **A Compose `FilterChip`'s `checked="true"` is on the chip node, not on its text node.**
   Grepping the label's own node always reads `checked="false"`; match the `checkable` parent
   that contains the label.
